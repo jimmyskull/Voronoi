@@ -343,7 +343,7 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::createTriangularFace(unsigned int vId1,
 	if (e3 != NULL)
 		readyEdges++;
 
-	unsigned int nullFaceId = (unsigned int) -1;
+	unsigned int nullFaceId = static_cast<unsigned int>(-1);
 	unsigned int faceId = nullFaceId;
 	Face* face = NULL;
 
@@ -466,7 +466,7 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::createTriangularFace(unsigned int vId1,
 			v1 = v2;
 			v2 = v3;
 			v3 = vt;
-			HalfEdge *et = e1;
+			HalfEdge* et = e1;
 			e1 = e2;
 			e2 = e3;
 			e3 = et;
@@ -550,7 +550,7 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::createTriangularFace(unsigned int vId1,
 			v1 = v2;
 			v2 = v3;
 			v3 = vt;
-			HalfEdge *et = e1;
+			HalfEdge* et = e1;
 			e1 = e2;
 			e2 = e3;
 			e3 = et;
@@ -610,7 +610,7 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::createTriangularFace(unsigned int vId1,
 			v1 = v2;
 			v2 = v3;
 			v3 = vt;
-			HalfEdge *et = e1;
+			HalfEdge* et = e1;
 			e1 = e2;
 			e2 = e3;
 			e3 = et;
@@ -940,8 +940,8 @@ void DCEL<Vdt, Hdt, Fdt>::manageUnhandledTriangles()
 		int v3 = unhandledTriangles.front();
 		unhandledTriangles.pop_front();
 		unsigned int fid = this->createTriangularFace(v1, v2, v3);
-		if (fid == -1) //ajust the number of triangles in case of the triangle was not added to the mesh
-				{
+		if (fid == static_cast<unsigned int>(-1)) {
+			// adjust the number of triangles in case of the triangle was not added to the mesh
 			unhandledTrianglesCount--;
 		}
 

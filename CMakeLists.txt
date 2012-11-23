@@ -1,10 +1,7 @@
 cmake_minimum_required (VERSION 2.6.2)
 
-set (CMAKE_CXX_COMPILER "clang++")
-set (CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -Werror -g -pipe ")
-set (CMAKE_CXX_FLAGS_RELEASE "-pipe -O3 ")
-
 project (voronoi)
+
 set (APPLICATION_NAME "Gerador de Diagrama de Voronoi")
 set (APPLICATION_CODENAME "${PROJECT_NAME}")
 set (APPLICATION_COPYRIGHT_YEARS "2012")
@@ -18,6 +15,21 @@ set (APPLICATION_VENDOR_NAME "Unicentro")
 set (APPLICATION_VENDOR_URL "unicentro.br")
 set (APPLICATION_ID "${APPLICATION_VENDOR_ID}.${PROJECT_NAME}")
 
+#
+# Compiler
+#
+
+if (NOT CMAKE_BUILD_TYPE)
+	message(STATUS "You may use Release and Debug types: ")
+	message(STATUS "   cmake -D CMAKE_BUILD_TYPE=Release ../")
+	set(CMAKE_BUILD_TYPE Debug)
+endif (NOT CMAKE_BUILD_TYPE)
+
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
+set (CMAKE_CXX_COMPILER "clang++")
+set (CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -Werror -g -pipe ")
+set (CMAKE_CXX_FLAGS_RELEASE "-pipe -O3 ")
 
 #
 # Debugging Options
