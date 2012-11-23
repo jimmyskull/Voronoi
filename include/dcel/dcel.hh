@@ -847,8 +847,7 @@ void DCEL<Vdt, Hdt, Fdt>::checkFace(unsigned int faceId) const
 		}
 
 		if (edge->getOrigin()->getIncidentEdge() == NULL) {
-			throw Exception(
-					"Every vertex must have a incident pointer (4)");
+			throw Exception("Every vertex must have a incident pointer (4)");
 		}
 
 		if (edge->getTwin() == NULL) {
