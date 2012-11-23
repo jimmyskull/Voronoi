@@ -17,4 +17,6 @@ lib/*
 build/*
 thirdparty/gmock/gtest/CMakeFiles/*
 nbproject/*
+.cproject
+.project
 

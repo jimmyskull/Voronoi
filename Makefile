@@ -17,6 +17,9 @@ all: ./build/Makefile
 ./lib:
 	@ mkdir lib
 
+test: build
+	@cd build && ctest ..
+
 clean:
 	@- (cd build >/dev/null 2>&1 && cmake .. >/dev/null 2>&1)
 	@- $(MAKE) --silent -C build clean || true
