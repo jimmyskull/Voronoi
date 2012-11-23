@@ -343,7 +343,7 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::createTriangularFace(unsigned int vId1,
 	if (e3 != NULL)
 		readyEdges++;
 
-	unsigned int nullFaceId = static_cast<unsigned int>(-1);
+	unsigned int nullFaceId = -1U;
 	unsigned int faceId = nullFaceId;
 	Face* face = NULL;
 
@@ -703,11 +703,10 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::getVertexId(const Vertex* vertex) const
 {
 	const Vertex* firstVertex = &(this->vertices[0]);
 	unsigned int id = vertex - firstVertex;
-	if (id >= 0 && id < this->vertices.size()) {
+	if (id >= 0 && id < this->vertices.size())
 		if (&(this->vertices[id]) == vertex)
 			return id;
-	}
-	return -1;
+	return -1U;
 }
 
 template<class Vdt, class Hdt, class Fdt>
@@ -745,7 +744,7 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::getFaceId(const Face* face) const
 		if (&(this->faces[id]) == face)
 			return id;
 	}
-	return -1;
+	return -1U;
 }
 
 template<class Vdt, class Hdt, class Fdt>
@@ -782,9 +781,8 @@ HalfEdgeT<Vdt, Hdt, Fdt>* DCEL<Vdt, Hdt, Fdt>::getHalfEdge(Vertex* vertexA,
 	EdgeIterator it(vertexA);
 	while (it.hasNext()) {
 		HalfEdge* e = it.getNext();
-		if (e->getTwin()->getOrigin() == vertexB) {
+		if (e->getTwin()->getOrigin() == vertexB)
 			return e;
-		}
 	}
 	return NULL;
 }
@@ -805,7 +803,7 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::getHalfEdgeId(HalfEdge* halfEdge) const
 		if (&(this->edges[id]) == halfEdge)
 			return id;
 	}
-	return -1;
+	return -1U;
 }
 
 template<class Vdt, class Hdt, class Fdt>
@@ -818,9 +816,8 @@ template<class Vdt, class Hdt, class Fdt>
 void DCEL<Vdt, Hdt, Fdt>::checkAllFaces() const
 {
 	const unsigned int numFaces = this->getNumFaces();
-	for (unsigned int f = 0; f < numFaces; ++f) {
+	for (unsigned int f = 0; f < numFaces; ++f)
 		this->checkFace(f);
-	}
 }
 
 template<class Vdt, class Hdt, class Fdt>
@@ -828,47 +825,38 @@ void DCEL<Vdt, Hdt, Fdt>::checkFace(unsigned int faceId) const
 {
 	Face* face = this->getFace(faceId);
 
-	if (face->getBoundary() == NULL) {
+	if (face->getBoundary() == NULL)
 		throw Exception("Every face must have a boundary (1)");
-	}
 
 	HalfEdge* edge = NULL;
 	EdgeIterator it(face);
 	while (it.hasNext()) {
 		edge = it.getNext();
 
-		if (edge->getFace() != face) {
-			throw Exception(
-					"The sequence of half-edges pointed by face->boundary must point to the same face (2)");
-		}
+		if (edge->getFace() != face)
+			throw Exception("The sequence of half-edges pointed by face->boundary must point to the same face (2)");
 
-		if (edge->getOrigin() == NULL) {
+		if (edge->getOrigin() == NULL)
 			throw Exception("Every edge must have an origin vertex (3)");
-		}
 
-		if (edge->getOrigin()->getIncidentEdge() == NULL) {
+		if (edge->getOrigin()->getIncidentEdge() == NULL)
 			throw Exception("Every vertex must have a incident pointer (4)");
-		}
 
-		if (edge->getTwin() == NULL) {
+		if (edge->getTwin() == NULL)
 			throw Exception("Every edge must have an twin edge (5)");
-		}
 
 		if (edge->getNext() == NULL) {
-			throw Exception(
-					"Every edge must have a next half-edge pointer (6)");
+			throw Exception("Every edge must have a next half-edge pointer (6)");
 		} else if (edge->getNext()->getOrigin()
 				!= edge->getTwin()->getOrigin()) {
-			throw Exception(
-					"The pointer edge->next->origin must be equal to edge->twin->origin (7)");
+			throw Exception("The pointer edge->next->origin must be equal to edge->twin->origin (7)");
 		}
 
 		if (edge->getPrev() == NULL) {
 			throw Exception("Every edge must have a prev pointer (8)");
 		} else if (edge->getPrev()->getTwin()->getOrigin()
 				!= edge->getOrigin()) {
-			throw Exception(
-					"The pointer edge->prev->twin->origin must be equal to edge->origin (9)");
+			throw Exception("The pointer edge->prev->twin->origin must be equal to edge->origin (9)");
 		}
 
 		bool edgeFound = false;
@@ -882,24 +870,19 @@ void DCEL<Vdt, Hdt, Fdt>::checkFace(unsigned int faceId) const
 				// if a "infinite" loop happens here, also there is an undetectable error!
 				// lets say that a vertex will not have more than 1000 incident edges.
 				count++;
-				if (count > 1000) {
-					throw Exception(
-							"There is an error iterating through the edges of a vertex - possible infinite loop - (10)");
-				}
+				if (count > 1000)
+					throw Exception("There is an error iterating through the edges of a vertex - possible infinite loop - (10)");
 			}
 		}
-		if (!edgeFound) {
-			throw Exception(
-					"The edge cannot be reachable iterating thought its origin (11)");
-		}
+		if (!edgeFound)
+			throw Exception("The edge cannot be reachable iterating thought its origin (11)");
 
 		if (edge->getTwin()->getFace() == NULL) {
 			const HalfEdge* initialBorder = edge->getTwin();
 			const HalfEdge* cEdge = initialBorder->getNext();
 			while (cEdge != initialBorder) {
 				if (cEdge->getFace() != NULL) {
-					throw Exception(
-							"The sequence of half edges on the border does not points to a null face (12)");
+					throw Exception("The sequence of half edges on the border does not points to a null face (12)");
 				}
 				cEdge = cEdge->getNext();
 			}
@@ -907,18 +890,15 @@ void DCEL<Vdt, Hdt, Fdt>::checkFace(unsigned int faceId) const
 	}
 
 	if (edge->getNext() != face->getBoundary()) {
-		throw Exception(
-				"The pointer edge->next of the last edge in a face border must be equals to the face->boundary (12)");
+		throw Exception("The pointer edge->next of the last edge in a face border must be equals to the face->boundary (12)");
 	}
 }
 
 template<class Vdt, class Hdt, class Fdt>
 void DCEL<Vdt, Hdt, Fdt>::manageUnhandledTriangles()
 {
-	if (unhandledTrianglesCount * 3 != unhandledTriangles.size()) {
-		throw Exception(
-				"The number of unhandled triangles should be equal to the number of unhandled vertices*3!");
-	}
+	if (unhandledTrianglesCount * 3 != unhandledTriangles.size())
+		throw Exception("The number of unhandled triangles should be equal to the number of unhandled vertices*3!");
 
 	int curTriangle = 0;
 	while (!this->unhandledTriangles.empty()) {
@@ -928,8 +908,7 @@ void DCEL<Vdt, Hdt, Fdt>::manageUnhandledTriangles()
 				unhandledTrianglesCount = remainingTriangles;
 				curTriangle = 0;
 			} else {
-				throw Exception(
-						"There are triangles that cannot be added to the mesh!");
+				throw Exception("There are triangles that cannot be added to the mesh!");
 			}
 		}
 
@@ -940,11 +919,9 @@ void DCEL<Vdt, Hdt, Fdt>::manageUnhandledTriangles()
 		int v3 = unhandledTriangles.front();
 		unhandledTriangles.pop_front();
 		unsigned int fid = this->createTriangularFace(v1, v2, v3);
-		if (fid == static_cast<unsigned int>(-1)) {
-			// adjust the number of triangles in case of the triangle was not added to the mesh
+		// adjust the number of triangles in case of the triangle was not added to the mesh
+		if (fid == -1U)
 			unhandledTrianglesCount--;
-		}
-
 		curTriangle++;
 	}
 }
@@ -970,9 +947,8 @@ HalfEdgeT<Vdt, Hdt, Fdt>* DCEL<Vdt, Hdt, Fdt>::findIncidentHalfEdge(
 			nullFacesCount++;
 		}
 	}
-	if (nullFacesCount != 1) {
+	if (nullFacesCount != 1)
 		result = NULL;
-	}
 	return result;
 }
 

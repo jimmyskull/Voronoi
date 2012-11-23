@@ -5,15 +5,18 @@
 
 namespace voronoi {
 
-Voronoi::Voronoi(std::list<Point*>& points) {
+Voronoi::Voronoi(std::list<Point*>& points)
+{
 	UNUSED(points);
 }
 
-Voronoi::Voronoi(const Voronoi& orig) {
+Voronoi::Voronoi(const Voronoi& orig)
+{
 	UNUSED(orig);
 }
 
-Voronoi::~Voronoi() {
+Voronoi::~Voronoi()
+{
 }
 
 }

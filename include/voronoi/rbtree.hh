@@ -104,8 +104,7 @@ private:
 			if (this->parent == NULL)
 				return NULL;
 
-			assert(
-					this->parent->link[LEFT] == this || this->parent->link[RIGHT] == this);
+			assert( this->parent->link[LEFT] == this || this->parent->link[RIGHT] == this);
 			return (this->parent->link[LEFT] == this ? this->parent->link[RIGHT] :
 					this->parent->link[LEFT]);
 		}
@@ -287,8 +286,7 @@ private:
 					cTarget->adjustLeave(cParent);
 			} else {
 				// swap target node & maximum node in left subtree
-				assert(
-						!this->link[LEFT]->isNil () && ! this->link[RIGHT]->isNil());
+				assert( !this->link[LEFT]->isNil () && ! this->link[RIGHT]->isNil());
 
 				RBTreeNode *cMax = this->link[LEFT]->searchMax();
 				RBTreeNode *mParent = cMax->parent;
@@ -339,8 +337,7 @@ private:
 				return;
 			}
 
-			RBTreeNode *cNeighbor = cParent->link[otherSide(
-					cParent->whichSide(*this))];
+			RBTreeNode *cNeighbor = cParent->link[otherSide(cParent->whichSide(*this))];
 
 			assert(cNeighbor);
 			// cParent->tree->dumpTree ("Adjusting by Leave");
@@ -446,8 +443,9 @@ public:
 	}
 };
 
-template<typename T> class RBTree<T>::RBTreeNode* RBTree<T>::nil =
-		new RBTreeNode(-1, 0, 0);
+template<typename T> class RBTree<T>::RBTreeNode* RBTree<T>::nil = new RBTreeNode(-1,
+		0,
+		0);
 template<typename T> bool RBTree<T>::DEBUG = true;
 
 }
