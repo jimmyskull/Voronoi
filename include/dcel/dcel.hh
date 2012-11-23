@@ -720,7 +720,6 @@ const std::vector<FaceT<Vdt, Hdt, Fdt> >& DCEL<Vdt, Hdt, Fdt>::getFaces() const
 {
 	return this->faces;
 }
-;
 
 template<class Vdt, class Hdt, class Fdt>
 unsigned int DCEL<Vdt, Hdt, Fdt>::getNumFaces() const
@@ -881,9 +880,8 @@ void DCEL<Vdt, Hdt, Fdt>::checkFace(unsigned int faceId) const
 			const HalfEdge* initialBorder = edge->getTwin();
 			const HalfEdge* cEdge = initialBorder->getNext();
 			while (cEdge != initialBorder) {
-				if (cEdge->getFace() != NULL) {
+				if (cEdge->getFace() != NULL)
 					throw Exception("The sequence of half edges on the border does not points to a null face (12)");
-				}
 				cEdge = cEdge->getNext();
 			}
 		}
