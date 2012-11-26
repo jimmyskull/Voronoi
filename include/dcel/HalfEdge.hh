@@ -56,6 +56,7 @@ public:
 	inline void setNext(HalfEdge* newNext)
 	{
 		assert(this);
+		assert(newNext != NULL);
 		this->next = newNext;
 		newNext->prev = this;
 	}
@@ -109,12 +110,12 @@ public:
 
 protected:
 private:
+	HalfEdgeDataT data;
 	HalfEdge* twin;
 	HalfEdge* next;
 	HalfEdge* prev;
 	Vertex* origin;
 	Face* face;
-	HalfEdgeDataT data;
 };
 
 }

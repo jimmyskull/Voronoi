@@ -14,6 +14,8 @@
 #include <iostream>
 #include <vector>
 
+#include <cstddef>
+
 #include "EdgeIterator.hh"
 #include "Exception.hh"
 #include "Face.hh"
@@ -42,6 +44,13 @@ public:
 
 	DCEL();
 
+	DCEL(size_t vertices, size_t edges, size_t faces)
+	{
+		getVertices().reserve(vertices);
+		getHalfEdges().reserve(edges * 2);
+		getFaces().reserve(faces);
+	}
+
 	~DCEL();
 
 	/**
@@ -62,6 +71,8 @@ public:
 	 Create a face, that has its boundary pointing to bound.
 	 */
 	unsigned int createFace(HalfEdge* bound);
+
+	Face* createGetFace(HalfEdge* bound);
 
 	/**
 	 Create an edge between the vertex origin and twinOrigin. Return the
@@ -294,6 +305,12 @@ unsigned int DCEL<Vdt, Hdt, Fdt>::createFace(HalfEdge* bound)
 	Face* face = &(faces[faceId]);
 	face->setBoundary(bound);
 	return faceId;
+}
+
+template<class Vdt, class Hdt, class Fdt>
+FaceT<Vdt, Hdt, Fdt>* DCEL<Vdt, Hdt, Fdt>::createGetFace(HalfEdge* bound)
+{
+	return &faces[createFace(bound)];
 }
 
 template<class Vdt, class Hdt, class Fdt>

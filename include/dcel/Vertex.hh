@@ -53,8 +53,8 @@ public:
 
 protected:
 private:
-	HalfEdge* incidentEdge;
 	VertexDataT data;
+	HalfEdge* incidentEdge;
 };
 
 }
