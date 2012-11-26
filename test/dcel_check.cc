@@ -35,36 +35,41 @@ static void createEdge(MyDCEL& d, MyDCEL::Vertex* origin, MyDCEL::Face* face,
 	twinOrigin->setIncidentEdge(*outTwinHalfEdge);
 }
 
+static MyDCEL::Face* createFace(MyDCEL& d, int id)
+{
+	MyDCEL::Face* face = d.createGetFace(NULL);
+
+	EXPECT_TRUE(face != NULL) << "Face não alocada.";
+	face->getData() = new FaceInfo(id);
+	return face;
+}
+
 
 TEST(DCELCheckTest, UnitTestingFrameworkWorks)
 {
 	LOG(INFO) << "Starting DCEL check test.";
 	const size_t VERTICES = 4;
-	const size_t EDGES = 10;
+	const size_t EDGES = 4;
 	const size_t FACES = 2;
 
+	/* Criar DCEL alocando espaço o necessário */
 	MyDCEL d(VERTICES, EDGES, FACES);
-
 	EXPECT_TRUE(d.getVertices().capacity() == VERTICES) << "Memória não alocada para os vértices.";
 	EXPECT_TRUE(d.getHalfEdges().capacity() == EDGES * 2) << "Memória não alocada para as meia arestas.";
 	EXPECT_TRUE(d.getFaces().capacity() == FACES) << "Memória não alocada para as faces.";
 
+	/* Criar os vértices */
 	MyDCEL::Vertex* v1 = createVertex(d, 0, 4);
 	MyDCEL::Vertex* v2 = createVertex(d, 2, 4);
 	MyDCEL::Vertex* v3 = createVertex(d, 2, 2);
 	MyDCEL::Vertex* v4 = createVertex(d, 1, 1);
 
-	MyDCEL::Face* f1 = d.createGetFace(NULL);
-	MyDCEL::Face* f2 = d.createGetFace(NULL);
+	/* Criar as faces */
+	MyDCEL::Face* f1 = createFace(d, 1);
+	MyDCEL::Face* f2 = createFace(d, 2);
 
-	f1->getData() = new FaceInfo(1);
-	f2->getData() = new FaceInfo(2);
-
-	EXPECT_TRUE(f1 != NULL) << "Face 1 não criada";
-	EXPECT_TRUE(f2 != NULL) << "Face 2 não criada";
-
+	/* Criar as meias arestas */
 	MyDCEL::HalfEdge *e11, *e12, *e21, *e22, *e31, *e32, *e41, *e42;
-
 	e11 = e12 = e21 = e22 = e31 = e32 = e41 = e42 = NULL;
 
 	/*  		  Src 	Face 	TwinSrc	TwinFace	HalfEdge	TwinHalfEdge */
@@ -87,6 +92,7 @@ TEST(DCELCheckTest, UnitTestingFrameworkWorks)
 
 	d.checkAllFaces();
 
+	/* Limpar a DCEL */
 	delete f1->getData();
 	delete f2->getData();
 
@@ -95,8 +101,6 @@ TEST(DCELCheckTest, UnitTestingFrameworkWorks)
 	delete v3->getData();
 	delete v4->getData();
 	d.clear();
-
-	//d.getFace(0)->getData() = 0;
 
 	LOG(INFO) << "Finishing DCEL check test.";
 }
