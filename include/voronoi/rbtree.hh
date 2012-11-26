@@ -5,9 +5,12 @@
 #include <string>
 #include <cassert>
 
+#include "status.hh"
+#include "voronoi.hh"
+
 namespace voronoi {
 
-template<typename T> class RBTree {
+class RBTree {
 private:
 	class RBTreeNode {
 	public:
@@ -19,11 +22,11 @@ private:
 			LEFT = 0, RIGHT = 1,
 		};
 
-		RBTreeNode(long long k, T* o, RBTree* t) :
-				obj(o), key(k), color(RED), parent(NULL), tree(t)
+		RBTreeNode(Status* o, RBTree* t) :
+				obj(o), color(RED), parent(NULL), tree(t)
 		{
-			this->link[LEFT] = RBTree<T>::nil;
-			this->link[RIGHT] = RBTree<T>::nil;
+			this->link[LEFT] = RBTree::nil;
+			this->link[RIGHT] = RBTree::nil;
 
 			if (NULL == o) {
 				this->color = BLACK;
@@ -52,7 +55,7 @@ private:
 			node.color = c;
 		}
 
-		inline T* getObj()
+		inline Status* getObj()
 		{
 			return this->obj;
 		}
@@ -90,7 +93,7 @@ private:
 				return RIGHT;
 			else
 				assert(0);
-			return 0;
+			return LEFT; /* TODO: nenhum */
 		}
 
 		inline Side otherSide(Side s)
@@ -111,8 +114,8 @@ private:
 
 		inline void attach(RBTreeNode& node)
 		{
-			assert(this->key != node.key);
-			Side s = (node.key < this->key ? LEFT : RIGHT);
+			assert(this->obj != node.obj);
+			Side s = (node.obj < this->obj ? LEFT : RIGHT);
 			this->attach(s, node);
 		}
 
@@ -131,11 +134,11 @@ private:
 			assert(s == LEFT || s == RIGHT);
 
 			if (this->isNil() || this->link[s]->isNil())
-				return RBTree<T>::nil;
+				return RBTree::nil;
 
 			RBTreeNode* node = this->link[s];
 			this->link[s]->parent = NULL;
-			this->link[s] = RBTree<T>::nil;
+			this->link[s] = RBTree::nil;
 			return node;
 		}
 
@@ -230,11 +233,12 @@ private:
 
 		bool insert(RBTreeNode& node)
 		{
-			if (this->key == node.key) {
+			if (this->obj == node.obj) {
 				// duplicated
 				return false;
 			} else {
-				Side s = (node.key < this->key ? LEFT : RIGHT);
+				double x = GetXOfEdge(this->obj->i, this->obj->j, node.obj->arc->y);
+				Side s = x > node.obj->arc->x ? LEFT : RIGHT;
 				if (!this->link[s]->isNil())
 					return this->link[s]->insert(node);
 				else
@@ -245,13 +249,13 @@ private:
 			return true;
 		}
 
-		RBTreeNode* lookup(long long k)
+		RBTreeNode* lookup(Status* o)
 		{
-			if (this->key == k) {
+			if (this->obj == o) {
 				return this;
 			} else {
-				Side s = (k < this->key ? LEFT : RIGHT);
-				return (this->link[s]->isNil() ? NULL : this->link[s]->lookup(k));
+				Side s = (o < this->obj ? LEFT : RIGHT);
+				return (this->link[s]->isNil() ? NULL : this->link[s]->lookup(o));
 			}
 		}
 
@@ -378,8 +382,7 @@ private:
 			}
 		}
 	private:
-		T * obj;
-		long long key;
+		Status *obj;
 		Color color;
 		RBTreeNode *parent, *link[2];
 		RBTree *tree;
@@ -399,13 +402,13 @@ public:
 		delete this->root;
 	}
 
-	bool insert(long long key, T* p)
+	bool insert(Status* p)
 	{
-		RBTreeNode *node = new RBTreeNode(key, p, this);
+		RBTreeNode *node = new RBTreeNode(p, this);
 
-		assert(key >= 0);
+		//assert(key >= 0);
 
-		if (this->root) {
+		if (this->root != NULL) {
 			if (!this->root->insert(*node)) {
 				delete node;
 				return false;
@@ -418,21 +421,21 @@ public:
 		return true;
 	}
 
-	T* lookup(long long key)
+	Status* lookup(Status* o)
 	{
 		if (NULL == this->root)
 			return NULL;
 
-		RBTreeNode * node = this->root->lookup(key);
+		RBTreeNode* node = this->root->lookup(o);
 		return (node ? node->getObj() : NULL);
 	}
 
-	bool remove(long long key)
+	bool remove(Status* p)
 	{
 		if (NULL == this->root)
 			return false;
 
-		RBTreeNode *node = this->root->lookup(key);
+		RBTreeNode *node = this->root->lookup(p);
 		if (NULL == node)
 			return false;
 
@@ -443,10 +446,8 @@ public:
 	}
 };
 
-template<typename T> class RBTree<T>::RBTreeNode* RBTree<T>::nil = new RBTreeNode(-1,
-		0,
-		0);
-template<typename T> bool RBTree<T>::DEBUG = true;
+class RBTree::RBTreeNode* RBTree::nil = new RBTreeNode(0, 0);
+bool RBTree::DEBUG = true;
 
 }
 

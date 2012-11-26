@@ -9,18 +9,6 @@
 
 namespace voronoi {
 
-class FaceData {
-public:
-	std::string name;
-};
-
-class Status {
-public:
-	Point* i;
-	Point* j;
-	Point* arc;
-};
-
 class Voronoi {
 public:
 	Voronoi(std::list<Point*>&);
@@ -29,8 +17,11 @@ public:
 private:
 	std::priority_queue<Point*> queue;
 	std::list<Point*> sites;
-	dcel::DCEL<Point, Point, FaceData> dcel;
-	RBTree<Status> tree;
+	dcel::DCEL<Point*, Point*, FaceData*> dcel;
+	RBTree tree;
+
+	void HandleSiteEvent(Point* p);
+	void HandleCircleEvent(Point* p);
 };
 
 }
