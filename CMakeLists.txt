@@ -75,11 +75,16 @@ link_directories (${GLog_LIBRARY_DIRS})
 
 find_package (Gmock REQUIRED)
 
+find_package(GLUT)
+find_package(OpenGL)
+
 #
 # Add Build Targets
 #
 
 add_subdirectory (src)
+add_subdirectory (viewer_example)
+add_subdirectory (tree_test)
 add_subdirectory (test)
 
 #

@@ -1,6 +1,5 @@
 #include <list>
 #include <macros.hh>
-#include <voronoi/geometry.hh>
 #include <voronoi/voronoi.hh>
 
 namespace voronoi {
@@ -18,7 +17,7 @@ Voronoi::Voronoi(std::list<Point*>& points)
 		Point* p = queue.top();
 		queue.pop();
 
-		if (p->site_event)
+		if (p->hasCircleEvent())
 			HandleSiteEvent(p);
 		else
 			HandleCircleEvent(p);
@@ -38,13 +37,13 @@ Voronoi::~Voronoi()
 void Voronoi::HandleSiteEvent(Point* p)
 {
 	UNUSED(p);
-	if (tree.lookup(NULL) == NULL) {
+	/*if (tree.lookup(NULL) == NULL) {
 		Status* node = new Status;
 		node->i = p;
 		tree.insert(node);
 
 		//double dist = p->y
-	}
+	}*/
 }
 
 void Voronoi::HandleCircleEvent(Point* p)

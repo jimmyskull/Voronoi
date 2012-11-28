@@ -6,17 +6,17 @@
 
 #include <dcel/dcel.hh>
 #include <dcel/Vertex.hh>
-#include <voronoi/geometry.hh>
+#include <voronoi/voronoi.hh>
 
 using voronoi::Point;
 using voronoi::FaceInfo;
 
-typedef dcel::DCEL<Point*, Point*, FaceInfo*> MyDCEL;
+typedef dcel::DCEL<Point, Point, FaceInfo> MyDCEL;
 
 static MyDCEL::Vertex* createVertex(MyDCEL& d, double x, double y)
 {
-	MyDCEL::Vertex *v = d.createGetVertex();
-	v->getData() = new voronoi::Point(x, y);
+	MyDCEL::Vertex* v = d.createGetVertex();
+	v->getData().set_coordinates(x, y);
 	EXPECT_TRUE(v != NULL) << "Erro ao criar vértice";
 	return v;
 }
@@ -29,7 +29,11 @@ static void createEdge(MyDCEL& d, MyDCEL::Vertex* origin, MyDCEL::Face* face,
 
 	*outHalfEdge = d.getHalfEdge(i);
 	EXPECT_TRUE(*outHalfEdge != NULL) << "Erro ao criar meia aresta";
-	*outTwinHalfEdge = d.getHalfEdge(i + 1);
+	*outTwinHalfEdge = (*outHalfEdge)->getTwin();
+	EXPECT_TRUE(*outTwinHalfEdge != NULL) << "Erro ao criar meia aresta";
+
+	EXPECT_TRUE((*outHalfEdge)->getOrigin() == origin) << "Meia aresta com origem incorreta.";
+	EXPECT_TRUE((*outTwinHalfEdge)->getOrigin() == twinOrigin) << "Meia aresta gêmea com origem errada.";
 
 	origin->setIncidentEdge(*outHalfEdge);
 	twinOrigin->setIncidentEdge(*outTwinHalfEdge);
@@ -40,7 +44,7 @@ static MyDCEL::Face* createFace(MyDCEL& d, int id)
 	MyDCEL::Face* face = d.createGetFace(NULL);
 
 	EXPECT_TRUE(face != NULL) << "Face não alocada.";
-	face->getData() = new FaceInfo(id);
+	face->getData().set_id(id);
 	return face;
 }
 
@@ -63,10 +67,12 @@ TEST(DCELCheckTest, UnitTestingFrameworkWorks)
 	MyDCEL::Vertex* v2 = createVertex(d, 2, 4);
 	MyDCEL::Vertex* v3 = createVertex(d, 2, 2);
 	MyDCEL::Vertex* v4 = createVertex(d, 1, 1);
+	EXPECT_TRUE(d.getVertices().size() == VERTICES) << "Não foram adicionados todos vértices.";
 
 	/* Criar as faces */
 	MyDCEL::Face* f1 = createFace(d, 1);
 	MyDCEL::Face* f2 = createFace(d, 2);
+	EXPECT_TRUE(d.getFaces().size() == FACES) << "Não foram adicionadas todas as faces.";
 
 	/* Criar as meias arestas */
 	MyDCEL::HalfEdge *e11, *e12, *e21, *e22, *e31, *e32, *e41, *e42;
@@ -77,6 +83,7 @@ TEST(DCELCheckTest, UnitTestingFrameworkWorks)
 	createEdge(d, v3,	f1, 	v4, 	f1, 		&e21, 		&e22);
 	createEdge(d, v3, 	f1, 	v1, 	f2, 		&e31, 		&e32);
 	createEdge(d, v3, 	f2, 	v2, 	f1, 		&e41, 		&e42);
+	EXPECT_TRUE(d.getHalfEdges().size() == EDGES * 2) << "Não foram adicionadas todas as meia-arestas";
 
 	e11->setNext(e42);
 	e12->setNext(e32);
@@ -90,16 +97,9 @@ TEST(DCELCheckTest, UnitTestingFrameworkWorks)
 	f1->setBoundary(e22);
 	f2->setBoundary(e32);
 
-	d.checkAllFaces();
+	EXPECT_NO_THROW(d.checkAllFaces()) << "Erro ao verificar faces.";
 
 	/* Limpar a DCEL */
-	delete f1->getData();
-	delete f2->getData();
-
-	delete v1->getData();
-	delete v2->getData();
-	delete v3->getData();
-	delete v4->getData();
 	d.clear();
 
 	LOG(INFO) << "Finishing DCEL check test.";
