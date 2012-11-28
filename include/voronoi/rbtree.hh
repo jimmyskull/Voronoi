@@ -11,38 +11,22 @@
 
 #include <cassert>
 #include <cstddef>
-#include <iostream>
 #include <tr1/functional>
-#include <cstddef>
 
 namespace voronoi {
 
+/**
+ * Implementation of Redblack tree specific for the fortune's algorithm to
+ * make voronoi diagrams.
+ *
+ * Here, the insertion is unusual, more like an "attach" node to one side
+ * instead of a real insert method.  The class VoronoiTree implements this.
+ */
 template<class T>
 class RBTree {
 public:
-	RBTree() :
-			_root(NULL)
-	{
-	}
-
-	~RBTree()
-	{
-		FreeAllNodes();
-	}
-
 	class RBTreeNode;
-	typedef std::tr1::function<void(RBTreeNode*)> Callback;
-
-	RBTreeNode* root() const
-	{
-		return _root;
-	}
-
-	void set_root(RBTreeNode* root)
-	{
-		std::cerr << "tree.set_root(" << root << ")\n";
-		_root = root;
-	}
+	typedef std::tr1::function<void(const RBTreeNode*)> Callback;
 
 	class RBTreeNode {
 	public:
@@ -51,7 +35,8 @@ public:
 		};
 
 		RBTreeNode(T& data, RBTree* tree) :
-				_parent(NULL), _left_child(NULL), _right_child(NULL), _color(kRed), _data(data), _tree(tree), _id(0)
+				_parent(NULL), _left_child(NULL), _right_child(NULL),
+						_color(kRed), _data(data), _tree(tree), _id(0)
 		{
 		}
 
@@ -76,8 +61,6 @@ public:
 
 		void set_color(Color color)
 		{
-			if (_color != color)
-				std::cerr << this << ".set_color(" << (color==kBlack?"\033[1mBLACK\033[0m":"\033[31;1mRED\033[0m") << ")\n";
 			_color = color;
 		}
 
@@ -121,6 +104,11 @@ public:
 			return _tree;
 		}
 
+		RBTreeNode* grandparent() const
+		{
+			return parent()->parent();
+		}
+
 		bool isBlack() const
 		{
 			return color() == kBlack;
@@ -136,16 +124,21 @@ public:
 			return left_child() == NULL && right_child() == NULL;
 		}
 
-		void WalkInOrderUpdateID(int* id)
+		void UpdateNodeIDs(int* id)
 		{
+			/*
+			 * This method is called to prepare the tree to be printed in
+			 * pre-order.  Useful to draw the tree with "bosque", where only
+			 * integers are accepted as key to a node.
+			 */
 			if (left_child())
-				left_child()->WalkInOrderUpdateID(id);
+				left_child()->UpdateNodeIDs(id);
 			set_id((*id)++);
 			if (right_child())
-				right_child()->WalkInOrderUpdateID(id);
+				right_child()->UpdateNodeIDs(id);
 		}
 
-		void WalkPreOrder(Callback callback)
+		void WalkPreOrder(Callback callback) const
 		{
 			callback(this);
 			if (left_child())
@@ -158,14 +151,13 @@ public:
 		{
 			RBTreeNode* y = right_child();
 
-			std::cerr << "RotateToLeft()\n";
 			set_right_child(y->left_child());
 			if (y->left_child() != NULL)
 				y->left_child()->set_parent(this);
 			y->set_parent(parent());
 			if (parent() == NULL)
 				tree()->set_root(y);
-			else if (this->isLeftChild())
+			else if (isLeftChild())
 				parent()->set_left_child(y);
 			else
 				parent()->set_right_child(y);
@@ -177,14 +169,13 @@ public:
 		{
 			RBTreeNode* y = left_child();
 
-			std::cerr << "RotateToRight()\n";
 			set_left_child(y->right_child());
 			if (y->right_child() != NULL)
 				y->right_child()->set_parent(this);
 			y->set_parent(parent());
 			if (parent() == NULL)
 				tree()->set_root(y);
-			else if (this->isRightChild())
+			else if (isRightChild())
 				parent()->set_right_child(y);
 			else
 				parent()->set_left_child(y);
@@ -192,92 +183,26 @@ public:
 			set_parent(y);
 		}
 
-		RBTreeNode* grandparent() const
-		{
-			return parent()->parent();
-		}
-
-		/* Do not call this directly. Use InsertFixUp */
 		void FixUp()
 		{
-			RBTreeNode* uncle;
-			RBTreeNode* next(this);
-
-			std::cerr << "Fixing node "<< this << "\n";
-
-			if (parent() == NULL || parent()->isBlack())
-				return;
-
-			//if (grandparent() == NULL)
-			//	return;
-			if (parent()->isLeftChild()) {
-				uncle = grandparent()->right_child();
-				if (uncle != NULL && uncle->isRed()) {
-					std::cerr << "\033[36;1mCaso 1 (leftChild)\033[0m\n";
-					parent()->set_color(kBlack);
-					uncle->set_color(kBlack);
-					grandparent()->set_color(kRed);
-					next = grandparent();
-				} else {
-					std::cerr << "\033[36;1mCaso 2 (leftChild)\033[0m\n";
-					if (isRightChild()) {
-						next = parent();
-						next->RotateToLeft();
-					}
-					next->parent()->set_color(kBlack);
-					next->grandparent()->set_color(kRed);
-					std::cerr << "A\n";
-					next->grandparent()->RotateToRight();
-				}
-			} else if (parent()->isRightChild()) {
-				uncle = grandparent()->left_child();
-				if (uncle != NULL && uncle->isRed()) {
-					std::cerr << "\033[36;1mCaso 1 (rightChild)\033[0m\n";
-					parent()->set_color(kBlack);
-					uncle->set_color(kBlack);
-					grandparent()->set_color(kRed);
-					next = grandparent();
-				} else {
-					std::cerr << "\033[36;1mCaso 2 (rightChild)\033[0m\n";
-					if (isLeftChild()) {
-						std::cerr << "   x isLeftChild(), " << parent()<<".RotateToLeft()\n";
-						next = parent();
-						next->RotateToRight();
-					}
-					next->parent()->set_color(kBlack);
-					next->grandparent()->set_color(kRed);
-					std::cerr << "B "<<next->grandparent()<<".RotateToRight()\n";
-					next->grandparent()->RotateToLeft();
-				}
-			}
-			if (next != NULL)
-				next->FixUp();
-		}
-
-		void InsertFixUp()
-		{
-			std::cerr << "\033[32;1m===> " << this << ".InsertFixUp()\033[0m\n";
-			FixUp();
+			InternalFixUp();
 			tree()->root()->set_color(kBlack);
-			std::cerr << "\033[32;1m<=== (saindo)" << this << ".InsertFixUp()\033[0m\n";
 		}
 
 		void InsertLeftChild(RBTreeNode* node)
 		{
-			std::cerr << this << ".InsertLeftChild(" << node << ")\n";
 			assert(left_child() == NULL);
 			set_left_child(node);
 			node->set_parent(this);
-			node->InsertFixUp();
+			node->FixUp();
 		}
 
 		void InsertRightChild(RBTreeNode* node)
 		{
-			std::cerr << this << ".InsertRightChild(" << node << ")\n";
 			assert(right_child() == NULL);
 			set_right_child(node);
 			node->set_parent(this);
-			node->InsertFixUp();
+			node->FixUp();
 		}
 
 		bool isLeftChild() const
@@ -295,6 +220,9 @@ public:
 			return parent() == NULL;
 		}
 
+		/**
+		 * Detach child node without freeing.
+		 */
 		void DetachLeftChild()
 		{
 			if (left_child() != NULL)
@@ -302,6 +230,9 @@ public:
 			set_left_child(NULL);
 		}
 
+		/**
+		 * Detach child node without freeing.
+		 */
 		void DetachRightChild()
 		{
 			if (right_child() != NULL)
@@ -309,50 +240,91 @@ public:
 			set_right_child(NULL);
 		}
 
-		void DeleteLeftChild()
-		{
-			RBTreeNode* node = left_child();
-			DetachLeftChild();
-			delete node;
-		}
-
-		void DeleteRightChild()
-		{
-			RBTreeNode* node = right_child();
-			DetachRightChild();
-			delete node;
-		}
-
+		/**
+		 * Go through the tree until find a leaf.  This is used to find
+		 * the nearest parabola on voronoi's algorithm.
+		 */
 		RBTreeNode* FindNearest(T& value)
 		{
 			if (isLeaf())
 				return this;
 			if (*data() < value) {
-				if (left_child()->isLeaf()) {
+				if (left_child()->isLeaf())
 					return left_child();
-				} else {
+				else
 					return left_child()->FindNearest(value);
-				}
 			} else {
-				if (right_child()->isLeaf()) {
+				if (right_child()->isLeaf())
 					return right_child();
-				} else {
+				else
 					return right_child()->FindNearest(value);
-				}
 			}
 		}
 
-		void WalkPosOrderFreeingChilds()
+		/**
+		 * Free all child nodes, without detaching them.  You should notice
+		 * the node will still have pointers to this free'd memory.  We won't
+		 * set the links to left and right to NULL.
+		 */
+		void FreeChildNodes() const
 		{
 			if (left_child())
-				left_child()->WalkPosOrderFreeingChilds();
+				left_child()->FreeChildNodes();
 			delete left_child();
 			if (right_child())
-				right_child()->WalkPosOrderFreeingChilds();
+				right_child()->FreeChildNodes();
 			delete right_child();
 		}
 
 	private:
+		void InternalFixUp()
+		{
+			/*
+			 * Helper method for FixUp().
+			 */
+			RBTreeNode* uncle;
+			RBTreeNode* next(this);
+
+			if (isRoot() || parent()->isBlack())
+				return;
+
+			if (parent()->isLeftChild()) {
+				uncle = grandparent()->right_child();
+				if (uncle != NULL && uncle->isRed()) {
+					parent()->set_color(kBlack);
+					uncle->set_color(kBlack);
+					grandparent()->set_color(kRed);
+					next = grandparent();
+				} else {
+					if (isRightChild()) {
+						next = parent();
+						next->RotateToLeft();
+					}
+					next->parent()->set_color(kBlack);
+					next->grandparent()->set_color(kRed);
+					next->grandparent()->RotateToRight();
+				}
+			} else if (parent()->isRightChild()) {
+				uncle = grandparent()->left_child();
+				if (uncle != NULL && uncle->isRed()) {
+					parent()->set_color(kBlack);
+					uncle->set_color(kBlack);
+					grandparent()->set_color(kRed);
+					next = grandparent();
+				} else {
+					if (isLeftChild()) {
+						next = parent();
+						next->RotateToRight();
+					}
+					next->parent()->set_color(kBlack);
+					next->grandparent()->set_color(kRed);
+					next->grandparent()->RotateToLeft();
+				}
+			}
+			if (next != NULL)
+				next->InternalFixUp();
+		}
+
 		void set_id(int id)
 		{
 			_id = id;
@@ -366,52 +338,65 @@ public:
 		RBTree* _tree;
 		int _id;
 	};
-	/* RBTreeNode */
+
+	RBTree() :
+			_root(NULL)
+	{
+	}
+
+	~RBTree()
+	{
+		FreeAllNodes();
+	}
 
 	bool isEmpty() const
 	{
 		return root() == NULL;
 	}
 
-	/* Called only when the tree is empty! */
-	void Insert(T& value)
-	{
-		RBTreeNode* new_node = new RBTreeNode(value, this);
-
-		if (isEmpty()) {
-			set_root(new_node);
-			new_node->set_color(RBTreeNode::kBlack);
-			return;
-		}
-		throw;
-	}
-
-	RBTreeNode* FindParabola(T& value)
+	RBTreeNode* FindParabola(T& value) const
 	{
 		if (isEmpty())
 			return NULL;
 		return root()->FindNearest(value);
 	}
 
-	/* Workaround to walk tree InOrder updating the nodes. Used before
-	 * printing. */
-	void UpdateTreeIds()
+	void PrintTree(Callback print_callback)
 	{
-		int id(1);
-		if (root() != NULL)
-			root()->WalkInOrderUpdateID(&id);
+		if (isEmpty())
+			return;
+		UpdateTreeIds();
+		root()->WalkPreOrder(print_callback);
 	}
 
+	RBTreeNode* root() const
+	{
+		return _root;
+	}
+
+	void set_root(RBTreeNode* root)
+	{
+		_root = root;
+	}
 
 private:
-
 	void FreeAllNodes()
 	{
 		if (!isEmpty()) {
-			root()->WalkPosOrderFreeingChilds();
+			root()->FreeChildNodes();
 			delete root();
 			set_root(NULL);
 		}
+	}
+
+	/* Workaround to walk tree InOrder updating the nodes. Used before
+	 * printing.  The IDs don't mean anything to the node as a real
+	 * identifier. */
+	void UpdateTreeIds()
+	{
+		int id(1);
+		if (!isEmpty())
+			root()->UpdateNodeIDs(&id);
 	}
 
 	RBTreeNode* _root;

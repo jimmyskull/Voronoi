@@ -29,7 +29,7 @@ public:
 	void MouseMotionCallback(int x, int y);
 
 	void set_diagram(VoronoiDCEL* diagram);
-	VoronoiDCEL* diagram();
+	const VoronoiDCEL* diagram() const;
 
 	void Init();
 	void Show();
@@ -42,14 +42,14 @@ private:
 
 	void UpdatePerspective(int width, int height);
 
-	bool mouse_x();
-	bool mouse_y();
-	bool mouse_left_button();
-	bool mouse_right_button();
+	bool mouse_x() const;
+	bool mouse_y() const;
+	bool mouse_left_button() const;
+	bool mouse_right_button() const;
 
-	int cameraAngleY();
-	int cameraAngleX();
-	float cameraDistance();
+	int camera_angle_y() const;
+	int camera_angle_x() const;
+	float camera_distance() const;
 
 	void set_mouse_x(bool value);
 	void set_mouse_y(bool value);
@@ -60,8 +60,8 @@ private:
 	void set_camera_angle_x(int value);
 	void set_camera_distance(float value);
 
-	void Draw3DString(const std::string str, std::vector<float>& pos,
-			std::vector<float>& color, const void* font);
+	void Draw3DString(const std::string str, const std::vector<float>& pos,
+			const std::vector<float>& color, const void* font);
 
 	bool _mouse_x;
 	bool _mouse_y;

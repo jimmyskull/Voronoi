@@ -70,7 +70,8 @@ DiagramViewer& DiagramViewer::getInstance()
 }
 
 DiagramViewer::DiagramViewer() :
-		_mouse_x(false), _mouse_y(false), _mouse_left_button(false), _mouse_right_button(false), _diagram(NULL)
+		_mouse_x(false), _mouse_y(false), _mouse_left_button(false),
+				_mouse_right_button(false), _diagram(NULL)
 {
 	Init();
 }
@@ -167,13 +168,13 @@ void DiagramViewer::DisplayCallback()
 	glLineWidth(100);
 
 	glPushMatrix();
-	glTranslatef(-3, -3, -cameraDistance());
+	glTranslatef(-3, -3, -camera_distance());
 
-	glRotatef(cameraAngleX(), 1, 0, 0); // pitch
-	glRotatef(cameraAngleY(), 0, 1, 0); // heading
+	glRotatef(camera_angle_x(), 1, 0, 0); // pitch
+	glRotatef(camera_angle_y(), 0, 1, 0); // heading
 
 	using voronoi::VoronoiDCEL;
-	VoronoiDCEL* d = diagram();
+	const VoronoiDCEL* d = diagram();
 
 	// Prepare string drawing vectors
 	std::vector<float> pos(3, 0.0f), color(4, 1.0f);
@@ -183,8 +184,8 @@ void DiagramViewer::DisplayCallback()
 
 	// Draw all vertices as spheres
 	glColor3f(0.5f, 0.0f, 0.1f);
-	std::vector<VoronoiDCEL::Vertex>& vertices = d->getVertices();
-	for (std::vector<VoronoiDCEL::Vertex>::iterator it = vertices.begin();
+	const std::vector<VoronoiDCEL::Vertex>& vertices = d->getVertices();
+	for (std::vector<VoronoiDCEL::Vertex>::const_iterator it = vertices.begin();
 			it != vertices.end(); it++) {
 		int x = it->getData().x, y = it->getData().y;
 
@@ -201,8 +202,8 @@ void DiagramViewer::DisplayCallback()
 
 	// Draw edges and write vertices index
 	glColor3f(.3f, .3f, .7f);
-	std::vector<VoronoiDCEL::HalfEdge>& edges = d->getHalfEdges();
-	for (std::vector<VoronoiDCEL::HalfEdge>::iterator it = edges.begin();
+	const std::vector<VoronoiDCEL::HalfEdge>& edges = d->getHalfEdges();
+	for (std::vector<VoronoiDCEL::HalfEdge>::const_iterator it = edges.begin();
 			it != edges.end(); it++, it++) {
 		int x = it->getOrigin()->getData().x;
 		int y = it->getOrigin()->getData().y;
@@ -219,8 +220,8 @@ void DiagramViewer::DisplayCallback()
 
 	// Draw faces indexes
 	glColor3f(.3f, .3f, .7f);
-	std::vector<VoronoiDCEL::Face>& faces = d->getFaces();
-	for (std::vector<VoronoiDCEL::Face>::iterator it = faces.begin();
+	const std::vector<VoronoiDCEL::Face>& faces = d->getFaces();
+	for (std::vector<VoronoiDCEL::Face>::const_iterator it = faces.begin();
 			it != faces.end(); it++) {
 		float xsum = 0.0f;
 		float ysum = 0.0f;
@@ -289,13 +290,13 @@ void DiagramViewer::MouseCallback(int button, int state, int x, int y)
 void DiagramViewer::MouseMotionCallback(int x, int y)
 {
 	if (mouse_left_button()) {
-		set_camera_angle_y(cameraAngleY() + (y - mouse_y()) * 0.002f);
-		set_camera_angle_x(cameraAngleX() + (x - mouse_x()) * 0.002f);
+		set_camera_angle_y(camera_angle_y() + (y - mouse_y()) * 0.002f);
+		set_camera_angle_x(camera_angle_x() + (x - mouse_x()) * 0.002f);
 		set_mouse_x(x);
 		set_mouse_y(y);
 	}
 	if (mouse_right_button()) {
-		set_camera_distance(cameraDistance() - (y - mouse_y()) * 0.0002f);
+		set_camera_distance(camera_distance() - (y - mouse_y()) * 0.0002f);
 		set_mouse_y(y);
 	}
 }
@@ -320,27 +321,27 @@ void DiagramViewer::set_diagram(VoronoiDCEL* diagram)
 	_diagram = diagram;
 }
 
-VoronoiDCEL* DiagramViewer::diagram()
+const VoronoiDCEL* DiagramViewer::diagram() const
 {
 	return _diagram;
 }
 
-bool DiagramViewer::mouse_x()
+bool DiagramViewer::mouse_x() const
 {
 	return _mouse_x;
 }
 
-bool DiagramViewer::mouse_y()
+bool DiagramViewer::mouse_y() const
 {
 	return _mouse_y;
 }
 
-bool DiagramViewer::mouse_left_button()
+bool DiagramViewer::mouse_left_button() const
 {
 	return _mouse_left_button;
 }
 
-bool DiagramViewer::mouse_right_button()
+bool DiagramViewer::mouse_right_button() const
 {
 	return _mouse_right_button;
 }
@@ -365,17 +366,17 @@ void DiagramViewer::set_mouse_right_button(bool value)
 	_mouse_right_button = value;
 }
 
-int DiagramViewer::cameraAngleY()
+int DiagramViewer::camera_angle_y() const
 {
 	return _camera_angle_y;
 }
 
-int DiagramViewer::cameraAngleX()
+int DiagramViewer::camera_angle_x() const
 {
 	return _camera_angle_x;
 }
 
-float DiagramViewer::cameraDistance()
+float DiagramViewer::camera_distance() const
 {
 	return _camera_distance;
 }
@@ -395,8 +396,9 @@ void DiagramViewer::set_camera_distance(float value)
 	_camera_distance = value;
 }
 
-void DiagramViewer::Draw3DString(const std::string str, std::vector<float>& pos,
-		std::vector<float>& color, const void* font)
+void DiagramViewer::Draw3DString(const std::string str,
+		const std::vector<float>& pos, const std::vector<float>& color,
+		const void* font)
 {
 	glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT); // lighting and color mask
 	glDisable(GL_LIGHTING);

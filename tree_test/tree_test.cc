@@ -9,7 +9,7 @@
 
 using namespace voronoi;
 
-void print_node(VoronoiTree::Node* v)
+void print_node(const VoronoiTree::Node* v)
 {
 	if (v->isRoot())
 		std::cerr << "root  ";
@@ -41,13 +41,10 @@ int main(void)
 	tree.InsertParabola(a);
 	tree.InsertParabola(b);
 	tree.InsertParabola(c);
-	//tree.InsertParabola(d);
-	//tree.InsertParabola(e);
+	tree.InsertParabola(d);
+	tree.InsertParabola(e);
 
-	/*std::cout << ".\n";
-	tree.UpdateTreeIds();
-	tree.root()->WalkPreOrder(print_node);
-	*/
+	tree.PrintTree(print_node);
 
 	delete a;
 	delete b;

@@ -30,6 +30,11 @@ public:
 	{
 	}
 
+	Status(Point* i, Point* j) :
+			i(i), j(j), arc(NULL)
+	{
+	}
+
 	~Status()
 	{
 	}
@@ -38,7 +43,7 @@ public:
 	{
 		assert(i != NULL);
 		assert(j != NULL);
-		//assert(b.arc != NULL);
+		assert(b.arc != NULL);
 		return GetXOfCircle(i, j, b.arc->y) < b.arc->x;
 	}
 
@@ -53,7 +58,7 @@ public:
 	bool operator ==(const Status& b) const
 	{
 		UNUSED(b);
-		return arc != NULL;
+		return false;
 	}
 
 	std::string str() const
