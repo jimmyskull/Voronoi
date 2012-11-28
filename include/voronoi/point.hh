@@ -13,6 +13,11 @@
 
 namespace voronoi {
 
+template <class T>
+class RBTreeNode;
+
+class Status;
+
 struct Point {
 	Point() :
 			x(0), y(0)
@@ -41,19 +46,19 @@ struct Point {
 		return (y < b.y) || (y == b.y && x < b.x);
 	}
 
-	/*VoronoiTree::Node* circle_event() const
+	RBTreeNode<Status>* circle_event() const
 	{
 		return _circle_event;
 	}
 
-	void set_circle_event(Point* event)
+	void set_circle_event(RBTreeNode<Status>* event)
 	{
 		_circle_event = event;
-	}*/
+	}
 
 	bool hasCircleEvent() const
 	{
-		return false;//circle_event() != NULL;
+		return circle_event() != NULL;
 	}
 
 	/* Círculo formado por a, b e c.
@@ -88,7 +93,7 @@ struct Point {
 	double y;
 	int id;
 private:
-	//VoronoiTree::Node* _circle_event;
+	RBTreeNode<Status>* _circle_event;
 };
 
 

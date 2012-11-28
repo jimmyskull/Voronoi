@@ -5,10 +5,10 @@
 #include <list>
 #include <queue>
 #include <dcel/dcel.hh>
-#include "voronoiface.hh"
+#include "face.hh"
 #include "point.hh"
+#include "rbtree.hh"
 #include "status.hh"
-#include "voronoitree.hh"
 
 namespace voronoi {
 
