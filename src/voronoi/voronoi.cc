@@ -4,10 +4,10 @@
 
 namespace voronoi {
 
-Voronoi::Voronoi(std::list<Point*>& points)
+Voronoi::Voronoi(std::list<Point*>& points) :
+		dcel(points.size() * 2, points.size() * 2, points.size()),
+		tree(queue, dcel)
 {
-	UNUSED(points);
-
 	// Passo 1
 	std::list<Point*>::const_iterator it;
 	for (it = points.begin(); it != points.end(); it++)
@@ -17,7 +17,7 @@ Voronoi::Voronoi(std::list<Point*>& points)
 		Point* p = queue.top();
 		queue.pop();
 
-		if (p->hasCircleEvent())
+		if (p->isCircleEvent())
 			HandleSiteEvent(p);
 		else
 			HandleCircleEvent(p);
@@ -25,7 +25,8 @@ Voronoi::Voronoi(std::list<Point*>& points)
 
 }
 
-Voronoi::Voronoi(const Voronoi& orig)
+Voronoi::Voronoi(const Voronoi& orig) :
+		dcel(orig.dcel), tree(queue, dcel)
 {
 	UNUSED(orig);
 }
@@ -38,12 +39,12 @@ void Voronoi::HandleSiteEvent(Point* p)
 {
 	UNUSED(p);
 	/*if (tree.lookup(NULL) == NULL) {
-		Status* node = new Status;
-		node->i = p;
-		tree.insert(node);
+	 Status* node = new Status;
+	 node->i = p;
+	 tree.insert(node);
 
-		//double dist = p->y
-	}*/
+	 //double dist = p->y
+	 }*/
 }
 
 void Voronoi::HandleCircleEvent(Point* p)

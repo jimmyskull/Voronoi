@@ -30,7 +30,9 @@ void print_node(const VoronoiTree::Node* v)
 
 int main(void)
 {
-	VoronoiTree tree;
+	VoronoiQueue queue;
+	VoronoiDCEL dcel(100, 100, 100);
+	VoronoiTree tree(queue, dcel);
 
 	Point* a = new Point(2, 5);
 	Point* b = new Point(5, 4);
@@ -44,7 +46,24 @@ int main(void)
 	tree.InsertParabola(d);
 	tree.InsertParabola(e);
 
-	tree.PrintTree(print_node);
+	//tree.PrintTree(print_node);
+
+	std::cout << " . ";
+	std::cerr << "Processando eventos de círculo.\n";
+
+	while (!queue.empty()) {
+		Point* x = queue.top();
+		queue.pop();
+
+		if (!x->isFalseAlarm())
+			tree.RemoveParabola(x);
+
+		delete x;
+	}
+
+	//tree.PrintTree(print_node);
+
+	dcel.clear();
 
 	delete a;
 	delete b;

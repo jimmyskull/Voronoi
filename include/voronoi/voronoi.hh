@@ -12,8 +12,8 @@
 
 namespace voronoi {
 
-typedef std::priority_queue<Point*> VoronoiQueue;
-typedef dcel::DCEL<Point, Point, FaceInfo> VoronoiDCEL;
+class VoronoiQueue;
+class VoronoiDCEL;
 
 class Voronoi {
 public:
