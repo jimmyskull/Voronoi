@@ -21,6 +21,9 @@ namespace voronoi {
 template<class T>
 class RBTree;
 
+#define RB_ISBLACK(x) (x != NULL? x->isBlack(): true)
+#define RB_ISRED(x) (x != NULL? x->isRed(): false)
+
 template<class T>
 class RBTreeNode {
 public:
@@ -411,19 +414,18 @@ private:
 		}
 		if (isLeftChild()) {
 			RBTreeNode* sibling = parent()->right_child();
-			if (sibling->isRed()) {
+			if (RB_ISRED(sibling)) {
 				sibling->set_color(kBlack);
 				parent()->set_color(kRed);
 				parent()->RotateToLeft();
 				sibling = parent()->right_child();
 			}
-			if (sibling->left_child()->isBlack()
-					&& sibling->right_child()->isBlack()) {
+			RBTreeNode* left = sibling->left_child();
+			RBTreeNode* right = sibling->right_child();
+			if (RB_ISBLACK(left) && RB_ISBLACK(right)) {
 				sibling->set_color(kRed);
 				sibling->InternalRemoveFixUp();
-				return;
-			} // else
-			if (sibling->right_child()->isBlack()) {
+			} else if (RB_ISBLACK(right)) {
 				sibling->left_child()->set_color(kBlack);
 				sibling->set_color(kRed);
 				sibling->RotateToRight();
@@ -433,24 +435,22 @@ private:
 				sibling->right_child()->set_color(kBlack);
 				parent()->RotateToLeft();
 				tree()->root()->InternalRemoveFixUp();
-				return;
 			}
 		} else {
 			assert(isRightChild());
 			RBTreeNode* sibling = parent()->left_child();
-			if (sibling->isRed()) {
+			if (RB_ISRED(sibling)) {
 				sibling->set_color(kBlack);
 				parent()->set_color(kRed);
 				parent()->RotateToRight();
 				sibling = parent()->left_child();
 			}
-			if (sibling->left_child()->isBlack()
-					&& sibling->right_child()->isBlack()) {
+			RBTreeNode* left = sibling->left_child();
+			RBTreeNode* right = sibling->right_child();
+			if (RB_ISBLACK(left) && RB_ISBLACK(right)) {
 				sibling->set_color(kRed);
 				sibling->InternalRemoveFixUp();
-				return;
-			} // else
-			if (sibling->left_child()->isBlack()) {
+			} else if (RB_ISBLACK(left)) {
 				sibling->right_child()->set_color(kBlack);
 				sibling->set_color(kRed);
 				sibling->RotateToLeft();
@@ -460,7 +460,6 @@ private:
 				sibling->left_child()->set_color(kBlack);
 				parent()->RotateToRight();
 				tree()->root()->InternalRemoveFixUp();
-				return;
 			}
 		}
 	}
@@ -558,7 +557,7 @@ private:
 
 struct Point;
 
-class VoronoiDCEL: public dcel::DCEL<Point*, Point*, FaceInfo> {
+class VoronoiDCEL: public dcel::DCEL<Point, Point, FaceInfo> {
 public:
 	VoronoiDCEL(size_t vertices, size_t edges, size_t faces) :
 			DCEL(vertices, edges, faces)
@@ -575,7 +574,7 @@ class Status;
 
 struct Point {
 	Point(const Point& p) :
-			_false_alarm(p.isFalseAlarm()), _face(NULL)
+			_false_alarm(p.isFalseAlarm()), _face(-1U)
 	{
 		set_coordinates(p.x, p.y);
 		set_id(id);
@@ -583,13 +582,13 @@ struct Point {
 	}
 
 	Point() :
-			x(0), y(0), id(0), _false_alarm(false), _face(NULL),
+			x(0), y(0), id(0), _false_alarm(false), _face(-1U),
 					_lowest_circle_parabola(NULL)
 	{
 	}
 
 	Point(double x, double y) :
-			id(0), _false_alarm(false), _face(NULL),
+			id(0), _false_alarm(false), _face(-1U),
 					_lowest_circle_parabola(NULL)
 	{
 		set_coordinates(x, y);
@@ -621,12 +620,17 @@ struct Point {
 		return y < b.y;
 	}
 
-	void set_face(VoronoiDCEL::Face* face)
+	bool operator >(const Point& b) const
+	{
+		return y > b.y;
+	}
+
+	void set_face(unsigned int face)
 	{
 		_face = face;
 	}
 
-	VoronoiDCEL::Face* face() const
+	unsigned int face() const
 	{
 		return _face;
 	}
@@ -686,6 +690,16 @@ struct Point {
 		_false_alarm = true;
 	}
 
+	double GetParabolaY(Point* other) const
+	{
+		double dp = 2. * (y - other->y);
+		double a1 = 1. / dp;
+		double b1 = -2. * x / dp;
+		double c1 = other->y + dp / 4. + std::pow(x, 2) / dp;
+
+		return a1 * std::pow(other->x, 2) + b1 * other->x + c1;
+	}
+
 	std::string str() const
 	{
 		std::stringstream ss;
@@ -698,13 +712,13 @@ struct Point {
 	double y;
 	int id;
 	bool _false_alarm;
-	VoronoiDCEL::Face* _face;
+	unsigned int _face;
 private:
 	RBTreeNode<Status>* _lowest_circle_parabola;
 };
 
 struct ComparePoint: public std::binary_function<Point*, Point*, bool> {
-	bool operator()(const Point* a, const Point* b) const
+	bool operator ()(const Point* a, const Point* b) const
 	{
 		return *a < *b;
 	}
@@ -801,6 +815,7 @@ public:
 			set_circle_event(NULL);
 		}
 	}
+
 private:
 	// TODO: Move method to Point class.
 	/* http://blog.ivank.net/fortunes-algorithm-and-implementation.html */
@@ -859,6 +874,7 @@ public:
 	void InsertParabola(Point* parabola)
 	{
 		Status s(parabola);
+		parabola->set_face(dcel.createFace(NULL));
 
 		std::cerr << "\033[1m==> InsertParabola(" << s.str() << ")\033[0m\n";
 		if (isEmpty()) {
@@ -904,6 +920,15 @@ public:
 		internal2->InsertRightChild(leaf_right);
 
 		// Create half-edges
+		assert(parabola->face() != -1U);
+		VoronoiDCEL::Face* f = dcel.getFace(parabola->face());
+		VoronoiDCEL::Face* f2 = dcel.getFace(nearest->data()->arc->face());
+		VoronoiDCEL::Vertex* v1 = dcel.createGetVertex();
+		v1->getData().set_x(parabola->x);
+		v1->getData().set_y(nearest->data()->arc->GetParabolaY(parabola));
+
+		unsigned int e1 = dcel.createEdge(v1, f, NULL, f2);
+		f->setBoundary(dcel.getHalfEdge(e1));
 
 		delete nearest;
 
@@ -957,12 +982,12 @@ public:
 
 	}
 
-	void RemoveParabola(Point* parabola)
+	void RemoveParabola(Point* circle_event)
 	{
-		std::cerr << "Processando evento de círculo: " << parabola->str()
+		std::cerr << "Processando evento de círculo: " << circle_event->str()
 				<< std::endl;
 
-		Node* leaf = parabola->lowest_circle_parabola();
+		Node* leaf = circle_event->lowest_circle_parabola();
 
 		Node* left_parent = leaf->GetFirstLeftParent();
 		Node* right_parent = leaf->GetFirstRightParent();
@@ -995,8 +1020,20 @@ public:
 		//std::cerr << " para " << data->str() << "\n";
 		p->parent()->set_data(data);
 
-		leaf->SelfDelete();
-		leaf->parent()->SelfDelete();
+		assert(leaf->data()->arc->face() != -1U);
+		VoronoiDCEL::Face* f = dcel.getFace(leaf->data()->arc->face());
+		VoronoiDCEL::Vertex* v1 = dcel.createGetVertex();
+		v1->getData().set_x(circle_event->x);
+		v1->getData().set_y(leaf->data()->arc->GetParabolaY(circle_event));
+
+		if (f->getBoundary() != NULL) {
+			f->getBoundary()->getTwin()->setOrigin(v1);
+			std::cerr << "aresta: "
+					<< f->getBoundary()->getOrigin()->getData().str() << " ";
+			std::cerr
+					<< f->getBoundary()->getTwin()->getOrigin()->getData().str()
+					<< "\n";
+		}
 
 		std::cerr << "\033[33;1mNovo vértice de voronoi em ";
 		std::cerr
@@ -1007,11 +1044,13 @@ public:
 		std::cerr << leaf->data()->str() << " e breakpoint "
 				<< leaf->parent()->data()->str() << "\033[0m\n";
 
+		leaf->SelfDelete();
+		leaf->parent()->SelfDelete();
 		delete leaf->parent();
 		delete leaf;
 
-		CheckCircle(left_neighbor, parabola->y);
-		CheckCircle(right_neighbor, parabola->y);
+		CheckCircle(left_neighbor, circle_event->y);
+		CheckCircle(right_neighbor, circle_event->y);
 	}
 
 private:

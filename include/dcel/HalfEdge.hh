@@ -98,6 +98,11 @@ public:
 		this->face = newFace;
 	}
 
+	void setData(HalfEdgeDataT& data)
+	{
+		this->data = data;
+	}
+
 	inline HalfEdgeDataT& getData()
 	{
 		return data;

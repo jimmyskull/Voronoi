@@ -5,6 +5,7 @@
 namespace voronoi {
 
 Voronoi::Voronoi(std::list<Point*>& points) :
+		sites(points.begin(), points.end()),
 		dcel(points.size() * 2, points.size() * 2, points.size()),
 		tree(queue, dcel)
 {
@@ -18,38 +19,38 @@ Voronoi::Voronoi(std::list<Point*>& points) :
 		queue.pop();
 
 		if (p->isCircleEvent())
-			HandleSiteEvent(p);
-		else
 			HandleCircleEvent(p);
+		else
+			HandleSiteEvent(p);
 	}
-
 }
+
+void Voronoi::HandleSiteEvent(Point* p)
+{
+	tree.InsertParabola(p);
+}
+
+void Voronoi::HandleCircleEvent(Point* p)
+{
+	if (!p->isFalseAlarm())
+		tree.RemoveParabola(p);
+	delete p;
+}
+
 
 Voronoi::Voronoi(const Voronoi& orig) :
 		dcel(orig.dcel), tree(queue, dcel)
 {
 	UNUSED(orig);
+	throw;
 }
 
 Voronoi::~Voronoi()
 {
-}
-
-void Voronoi::HandleSiteEvent(Point* p)
-{
-	UNUSED(p);
-	/*if (tree.lookup(NULL) == NULL) {
-	 Status* node = new Status;
-	 node->i = p;
-	 tree.insert(node);
-
-	 //double dist = p->y
-	 }*/
-}
-
-void Voronoi::HandleCircleEvent(Point* p)
-{
-	UNUSED(p);
+	while (!sites.empty()) {
+		delete sites.front();
+		sites.pop_front();
+	}
 }
 
 }

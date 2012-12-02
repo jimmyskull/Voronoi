@@ -8,7 +8,7 @@ using voronoi::VoronoiDCEL;
 static VoronoiDCEL::Vertex* createVertex(VoronoiDCEL& d, double x, double y)
 {
 	VoronoiDCEL::Vertex* v = d.createGetVertex();
-	v->getData()->set_coordinates(x, y);
+	v->getData().set_coordinates(x, y);
 	return v;
 }
 

@@ -4,6 +4,8 @@
  * $ ./bin/tree_test | desenhar --redblack
  */
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 
 #include <voronoi/voronoi.hh>
 
@@ -31,44 +33,46 @@ void print_node(const VoronoiTree::Node* v)
 int main(void)
 {
 	VoronoiQueue queue;
-	VoronoiDCEL dcel(100, 100, 100);
+	VoronoiDCEL dcel(6, 12, 6);
 	VoronoiTree tree(queue, dcel);
 
-	Point* a = new Point(2, 5);
+/*	Point* a = new Point(2, 5);
 	Point* b = new Point(5, 4);
 	Point* c = new Point(3, 3);
 	Point* d = new Point(7, 2);
 	Point* e = new Point(6, 1);
 
-	tree.InsertParabola(a);
-	tree.InsertParabola(b);
-	tree.InsertParabola(c);
-	tree.InsertParabola(d);
-	tree.InsertParabola(e);
-
-	//tree.PrintTree(print_node);
-
-	std::cout << " . ";
-	std::cerr << "Processando eventos de círculo.\n";
+	queue.push(a);
+	queue.push(b);
+	queue.push(c);
+	queue.push(d);
+	queue.push(e);
+*/
+	srand(time(NULL));
+	for (int i = 0; i < 100; i++)
+		queue.push(new Point(rand() % 20 + 2, rand() % 20 + 4));
 
 	while (!queue.empty()) {
 		Point* x = queue.top();
 		queue.pop();
 
-		if (!x->isFalseAlarm())
-			tree.RemoveParabola(x);
-
-		delete x;
+		if (x->isCircleEvent()) {
+			if (!x->isFalseAlarm())
+				tree.RemoveParabola(x);
+			delete x;
+		} else {
+			tree.InsertParabola(x);
+		}
 	}
 
-	//tree.PrintTree(print_node);
+	tree.PrintTree(print_node);
 
 	dcel.clear();
 
-	delete a;
-	delete b;
-	delete c;
-	delete d;
-	delete e;
+//	delete a;
+//	delete b;
+//	delete c;
+//	delete d;
+//	delete e;
 	return 0;
 }
