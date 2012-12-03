@@ -29,7 +29,7 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 set (CMAKE_CXX_COMPILER "clang++")
 set (CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -Werror -g -pipe ")
-set (CMAKE_CXX_FLAGS_RELEASE "-pipe -O3 ")
+set (CMAKE_CXX_FLAGS_RELEASE "-pipe -O3 -DNDEBUG=1")
 
 #
 # Debugging Options

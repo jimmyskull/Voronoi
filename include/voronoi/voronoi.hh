@@ -20,14 +20,16 @@ public:
 	Voronoi(std::list<Point*>&);
 	Voronoi(const Voronoi&);
 	virtual ~Voronoi();
-private:
-	void HandleSiteEvent(Point* p);
-	void HandleCircleEvent(Point* p);
 
 	std::list<Point*> sites;
 	VoronoiQueue queue;
 	VoronoiDCEL dcel;
 	VoronoiTree tree;
+private:
+	void HandleSiteEvent(Point* p);
+	void HandleCircleEvent(Point* p);
+
+
 };
 
 }

@@ -30,6 +30,12 @@ void print_node(const VoronoiTree::Node* v)
 	}
 }
 
+double frand(double fmin, double fmax)
+{
+    double f = (double) rand() / RAND_MAX;
+    return fmin + f * (fmax - fmin);
+}
+
 int main(void)
 {
 	VoronoiQueue queue;
@@ -49,8 +55,8 @@ int main(void)
 	queue.push(e);
 */
 	srand(time(NULL));
-	for (int i = 0; i < 100; i++)
-		queue.push(new Point(rand() % 20 + 2, rand() % 20 + 4));
+	for (int i = 0; i < 500; i++)
+		queue.push(new Point(frand(0, 20), frand(0, 20)));
 
 	while (!queue.empty()) {
 		Point* x = queue.top();

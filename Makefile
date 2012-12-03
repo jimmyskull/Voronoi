@@ -8,6 +8,11 @@ RM	:= rm -rf
 all: ./build/Makefile
 	@ $(MAKE) --no-print-directory -C build
 
+release: distclean
+	false
+	@ ./configure -D CMAKE_BUILD_TYPE=Release
+	@ $(MAKE) --no-print-directory -C build
+
 ./build/Makefile: ./build ./lib
 	@ (cd build >/dev/null 2>&1 && cmake ..)
 
@@ -19,6 +24,9 @@ all: ./build/Makefile
 
 test: build
 	@cd build && ctest ..
+
+valgrindtreetest: all
+	@valgrind --leak-check=full ./bin/tree_test
 
 clean:
 	@- (cd build >/dev/null 2>&1 && cmake .. >/dev/null 2>&1)
