@@ -11,26 +11,7 @@
 
 using namespace voronoi;
 
-void print_node(const VoronoiTree::Node* v)
-{
-	if (v->isRoot())
-		std::cerr << "root  ";
-	else if (v->isLeftChild())
-		std::cerr << "left  ";
-	else
-		std::cerr << "right ";
-	std::cerr << v->id() << " " << v->data()->str();
-	std::cout << v->id();
-	if (v->isBlack()) {
-		std::cout << " BLACK\n";
-		std::cerr << " \033[1mBLACK\033[0m " << " (" << v << ")\n";
-	} else {
-		std::cout << " RED\n";
-		std::cerr << " \033[31;1mRED\033[0m " << " (" << v << ")\n";
-	}
-}
-
-double frand(double fmin, double fmax)
+static double frand(double fmin, double fmax)
 {
     double f = (double) rand() / RAND_MAX;
     return fmin + f * (fmax - fmin);
@@ -71,7 +52,7 @@ int main(void)
 		}
 	}
 
-	tree.PrintTree(print_node);
+	tree.PrintTree();
 
 	dcel.clear();
 

@@ -15,8 +15,6 @@
 #include <voronoi/voronoi.hh>
 #include <viewer.hh>
 
-#include <macros.hh>
-
 extern "C" {
 
 static void display_callback()
@@ -187,7 +185,7 @@ void DiagramViewer::DisplayCallback()
 	const std::vector<VoronoiDCEL::Vertex>& vertices = d->getVertices();
 	for (std::vector<VoronoiDCEL::Vertex>::const_iterator it = vertices.begin();
 			it != vertices.end(); it++) {
-		int x = it->getData().x, y = it->getData().y;
+		double x = it->getData().x(), y = it->getData().y();
 
 		glTranslatef(x, y, 0);
 		GLUquadricObj* cyl = gluNewQuadric();
@@ -205,10 +203,10 @@ void DiagramViewer::DisplayCallback()
 	const std::vector<VoronoiDCEL::HalfEdge>& edges = d->getHalfEdges();
 	for (std::vector<VoronoiDCEL::HalfEdge>::const_iterator it = edges.begin();
 			it != edges.end(); it++, it++) {
-		int x = it->getOrigin()->getData().x;
-		int y = it->getOrigin()->getData().y;
-		int dstx = it->getTwin()->getOrigin()->getData().x;
-		int dsty = it->getTwin()->getOrigin()->getData().y;
+		double x = it->getOrigin()->getData().x();
+		double y = it->getOrigin()->getData().y();
+		double dstx = it->getTwin()->getOrigin()->getData().x();
+		double dsty = it->getTwin()->getOrigin()->getData().y();
 
 		glTranslatef(x, y, 0);
 		glBegin(GL_LINES);
@@ -227,13 +225,13 @@ void DiagramViewer::DisplayCallback()
 		float ysum = 0.0f;
 		VoronoiDCEL::HalfEdge* start = it->getBoundary();
 		VoronoiDCEL::HalfEdge* current = start->getNext();
-		xsum += start->getOrigin()->getData().x;
-		ysum += start->getOrigin()->getData().y;
+		xsum += start->getOrigin()->getData().x();
+		ysum += start->getOrigin()->getData().y();
 
 		int count = 1;
 		while (current != start) {
-			xsum += current->getOrigin()->getData().x;
-			ysum += current->getOrigin()->getData().y;
+			xsum += current->getOrigin()->getData().x();
+			ysum += current->getOrigin()->getData().y();
 			current = current->getNext();
 			count++;
 		}
@@ -263,11 +261,8 @@ void DiagramViewer::TimerCallback(int milliseconds)
 	glutPostRedisplay();
 }
 
-void DiagramViewer::KeyboardCallback(unsigned char key, int x, int y)
+void DiagramViewer::KeyboardCallback(unsigned char /*key*/, int /*x*/, int /*y*/)
 {
-	UNUSED(key);
-	UNUSED(x);
-	UNUSED(y);
 }
 
 void DiagramViewer::MouseCallback(int button, int state, int x, int y)

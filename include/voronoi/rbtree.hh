@@ -9,13 +9,9 @@
 #ifndef _RBTREE_HH_
 #define _RBTREE_HH_
 
-#include <limits>
-#include <queue>
 #include <tr1/functional>
 #include <cassert>
 #include <cstddef>
-#include <dcel/dcel.hh>
-#include "status.hh"
 
 namespace voronoi {
 
@@ -29,20 +25,13 @@ template<class T>
 class RBTreeNode {
 public:
 	enum Color {
-		kRed = 0, kBlack = 1
+		kRed = true, kBlack = false
 	};
 
 	RBTreeNode(T& data, RBTree<T>* tree) :
 			_parent(NULL), _left_child(NULL), _right_child(NULL), _color(kRed),
 					_data(data), _tree(tree), _id(0)
 	{
-		assert(left_child() == NULL);
-		assert(right_child() == NULL);
-		assert(color() == kRed);
-		assert(isRed());
-		assert(!isBlack());
-		assert(this->tree() != NULL);
-		assert(parent() == NULL);
 	}
 
 	~RBTreeNode()
@@ -156,7 +145,6 @@ public:
 	{
 		RBTreeNode* y = right_child();
 
-		assert(!isLeaf());
 		set_right_child(y->left_child());
 		if (y->left_child() != NULL)
 			y->left_child()->set_parent(this);
@@ -175,7 +163,6 @@ public:
 	{
 		RBTreeNode* y = left_child();
 
-		assert(!isLeaf());
 		set_left_child(y->right_child());
 		if (y->right_child() != NULL)
 			y->right_child()->set_parent(this);
@@ -196,40 +183,30 @@ public:
 		tree()->root()->set_color(kBlack);
 	}
 
-	void InsertLeftChild(RBTreeNode* node)
-	{
-		assert(left_child() == NULL);
-		set_left_child(node);
-		node->set_parent(this);
-		node->PosInsertFixUp();
-	}
-
-	void InsertRightChild(RBTreeNode* node)
-	{
-		if (right_child() != NULL)
-			std::cerr << right_child()->data()->str() << "\n";
-		assert(right_child() == NULL);
-		set_right_child(node);
-		node->set_parent(this);
-		node->PosInsertFixUp();
-	}
-
 	void AttachLeftChild(RBTreeNode* node)
 	{
 		assert(left_child() == NULL);
 		set_left_child(node);
 		node->set_parent(this);
-		//node->PosInsertFixUp();
+	}
+
+	void InsertLeftChild(RBTreeNode* node)
+	{
+		AttachLeftChild(node);
+		node->PosInsertFixUp();
 	}
 
 	void AttachRightChild(RBTreeNode* node)
 	{
-		if (right_child() != NULL)
-			std::cerr << right_child()->data()->str() << "\n";
 		assert(right_child() == NULL);
 		set_right_child(node);
 		node->set_parent(this);
-		//node->PosInsertFixUp();
+	}
+
+	void InsertRightChild(RBTreeNode* node)
+	{
+		AttachRightChild(node);
+		node->PosInsertFixUp();
 	}
 
 	/**
@@ -240,11 +217,8 @@ public:
 	 */
 	RBTreeNode* SelfDelete()
 	{
-		if (isRoot()) {
-			std::cerr
-					<< "I shouldn't be trying to delete myself when I'm the root.\n";
-			return this;
-		}
+		if (isRoot()) /* The root must not delete itself */
+			throw;
 		RBTreeNode* new_son;
 		if (left_child() != NULL)
 			new_son = left_child();
@@ -289,7 +263,6 @@ public:
 		if (left_child() != NULL)
 			left_child()->set_parent(NULL);
 		set_left_child(NULL);
-		assert(left_child() == NULL);
 	}
 
 	/**
@@ -300,7 +273,6 @@ public:
 		if (right_child() != NULL)
 			right_child()->set_parent(NULL);
 		set_right_child(NULL);
-		assert(right_child() == NULL);
 	}
 
 	/**
@@ -311,48 +283,37 @@ public:
 	{
 		if (isLeaf())
 			return this;
-		if (*data() < value) {
-			if (left_child()->isLeaf())
-				return left_child();
-			else
-				return left_child()->FindNearest(value);
-		} else {
-			if (right_child()->isLeaf())
-				return right_child();
-			else
-				return right_child()->FindNearest(value);
-		}
+		if (*data() < value)
+			return left_child()->FindNearest(value);
+		else
+			return right_child()->FindNearest(value);
 	}
 
-	RBTreeNode* GetFirstLeftParent()
+	RBTreeNode* GetFirstParentAtLeft()
 	{
-		RBTreeNode* last = this;
-		RBTreeNode* p = parent();
+		RBTreeNode* p = this;
 
-		while (p->left_child() == last) {
-			if (!p->parent())
+		while (p->isLeftChild()) {
+			if (p->isRoot())
 				return NULL;
-			last = p;
 			p = p->parent();
 		}
-		return p;
+		return p->parent();
 	}
 
-	RBTreeNode* GetFirstRightParent()
+	RBTreeNode* GetFirstParentAtRight()
 	{
-		RBTreeNode* last = this;
-		RBTreeNode* p = parent();
+		RBTreeNode* p = this;
 
-		while (p->right_child() == last) {
-			if (!p->parent())
+		while (p->isRightChild()) {
+			if (p->isRoot())
 				return NULL;
-			last = p;
 			p = p->parent();
 		}
-		return p;
+		return p->parent();
 	}
 
-	RBTreeNode* GetLeftmostChild() const
+	RBTreeNode* GetPredecessorChild() const
 	{
 		RBTreeNode* par = left_child();
 
@@ -363,7 +324,7 @@ public:
 		return par;
 	}
 
-	RBTreeNode* GetRightmostChild()
+	RBTreeNode* GetSuccessorChild()
 	{
 		RBTreeNode* par = right_child();
 
@@ -520,8 +481,6 @@ private:
 template<class T>
 class RBTree {
 public:
-	typedef RBTreeNode<T> Node;
-
 	typedef std::tr1::function<void(const RBTreeNode<T>*)> Callback;
 
 	RBTree() :
@@ -529,7 +488,7 @@ public:
 	{
 	}
 
-	~RBTree()
+	virtual ~RBTree()
 	{
 		FreeAllNodes();
 	}
@@ -539,27 +498,27 @@ public:
 		return root() == NULL;
 	}
 
-	Node* FindParabola(T& value) const
+	RBTreeNode<T>* FindParabola(T& value) const
 	{
 		if (isEmpty())
 			return NULL;
 		return root()->FindNearest(value);
 	}
 
-	void PrintTree(Callback print_callback)
+	void PrintTree(Callback callback)
 	{
 		if (isEmpty())
 			return;
 		UpdateTreeIds();
-		root()->WalkPreOrder(print_callback);
+		root()->WalkPreOrder(callback);
 	}
 
-	Node* root() const
+	RBTreeNode<T>* root() const
 	{
 		return _root;
 	}
 
-	void set_root(Node* root)
+	void set_root(RBTreeNode<T>* root)
 	{
 		_root = root;
 	}
@@ -584,540 +543,7 @@ private:
 			root()->UpdateNodeIDs(&id);
 	}
 
-	Node* _root;
-};
-
-struct Point;
-
-class VoronoiDCEL: public dcel::DCEL<Point, Point, FaceInfo> {
-public:
-	VoronoiDCEL(size_t vertices, size_t edges, size_t faces) :
-			DCEL(vertices, edges, faces)
-	{
-	}
-
-	VoronoiDCEL(const VoronoiDCEL& dcel) :
-			DCEL(dcel)
-	{
-	}
-};
-
-class Status;
-
-struct Point {
-	Point(const Point& p) :
-			_false_alarm(p.isFalseAlarm()), _face(-1U), start(p.start)
-	{
-		set_coordinates(p.x, p.y);
-		set_id(id);
-		set_circle_lowest_circle_parabola(p.lowest_circle_parabola());
-	}
-
-	Point() :
-			x(0), y(0), id(0), _false_alarm(false), _face(-1U), start(NULL),
-					_lowest_circle_parabola(NULL)
-	{
-	}
-
-	Point(double x, double y) :
-			id(0), _false_alarm(false), _face(-1U), start(NULL),
-					_lowest_circle_parabola(NULL)
-	{
-		set_coordinates(x, y);
-	}
-
-	void set_id(int id)
-	{
-		this->id = id;
-	}
-
-	void set_coordinates(double x, double y)
-	{
-		set_x(x);
-		set_y(y);
-	}
-
-	void set_x(double x)
-	{
-		this->x = x;
-	}
-
-	void set_y(double y)
-	{
-		this->y = y;
-	}
-
-	bool operator <(const Point& b) const
-	{
-		double abs_a = std::fabs(y);
-		double abs_b = std::fabs(b.y);
-		double greater = abs_a < abs_b? abs_b : abs_a;
-
-		return (b.y - y) > greater * std::numeric_limits<double>::epsilon();
-	}
-
-	bool operator >(const Point& b) const
-	{
-		throw;
-		return y > b.y;
-	}
-
-	void set_face(unsigned int face)
-	{
-		_face = face;
-	}
-
-	unsigned int face() const
-	{
-		return _face;
-	}
-
-	static Point GetCircleCenter(const Point* a, const Point* b, const Point* c)
-	{
-		double y_delta_a = b->y - a->y;
-		double x_delta_a = b->x - a->x;
-		double y_delta_b = c->y - b->y;
-		double x_delta_b = c->x - b->x;
-
-		double a_slope = y_delta_a / x_delta_a;
-		double b_slope = y_delta_b / x_delta_b;
-
-		double center_x, center_y;
-
-		center_x = (a_slope * b_slope * (a->y - c->y) + b_slope * (a->x + b->x)
-				- a_slope * (b->x + c->x)) / (2 * (b_slope - a_slope));
-		center_y = -1 * (center_x - (a->x + b->x) / 2) / a_slope
-				+ (a->y + b->y) / 2;
-
-		return Point(center_x, center_y);
-	}
-
-	void SetCoordinatesToTheCircleBottom(const Point* a, const Point* b,
-			const Point* c)
-	{
-		Point d = GetCircleCenter(a, b, c);
-
-		double dx = d.x - a->x;
-		double dy = d.y - a->y;
-
-		double radius = std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
-
-		set_coordinates(d.x, d.y - radius);
-	}
-
-	RBTreeNode<Status>* lowest_circle_parabola() const
-	{
-		return _lowest_circle_parabola;
-	}
-
-	void set_circle_lowest_circle_parabola(RBTreeNode<Status>* node)
-	{
-		_lowest_circle_parabola = node;
-	}
-
-	bool isCircleEvent() const
-	{
-		return lowest_circle_parabola() != NULL;
-	}
-
-	bool isFalseAlarm() const
-	{
-		return _false_alarm;
-	}
-
-	void MarkAsFalseAlarm()
-	{
-		_false_alarm = true;
-	}
-
-	double GetParabolaY(Point* other) const
-	{
-		double dp = 2. * (y - other->y);
-		double a1 = 1. / dp;
-		double b1 = -2. * x / dp;
-		double c1 = other->y + dp / 4. + std::pow(x, 2) / dp;
-
-		return a1 * std::pow(other->x, 2) + b1 * other->x + c1;
-	}
-
-	std::string str() const
-	{
-		std::stringstream ss;
-
-		ss << "(" << x*2 << "," << y*2 << ")";
-		return ss.str();
-	}
-
-	double x;
-	double y;
-	int id;
-	bool _false_alarm;
-	unsigned int _face;
-
-	// TODO: Clean
-	Point* start; /**< Edge start point */
-private:
-	RBTreeNode<Status>* _lowest_circle_parabola;
-};
-
-struct ComparePoint: public std::binary_function<Point*, Point*, bool> {
-	bool operator ()(const Point* a, const Point* b) const
-	{
-		return *a < *b;
-	}
-};
-
-class VoronoiQueue: public std::priority_queue<Point*, std::vector<Point*>,
-		ComparePoint> {
-
-};
-
-class Status {
-public:
-	Point* i;
-	Point* j;
-	Point* arc;
-
-	Status() :
-			i(NULL), j(NULL), arc(NULL), _circle_event(NULL)
-	{
-	}
-
-	Status(const Status& status) :
-			i(status.i), j(status.j), arc(status.arc),
-					_circle_event(status.circle_event())
-	{
-	}
-
-	Status(Point* arc) :
-			i(NULL), j(NULL), arc(arc), _circle_event(NULL)
-	{
-	}
-
-	Status(Point* i, Point* j) :
-			i(i), j(j), arc(NULL), _circle_event(NULL)
-	{
-	}
-
-	~Status()
-	{
-	}
-
-	bool operator <(const Status& b) const
-	{
-		assert(i != NULL);
-		assert(j != NULL);
-		assert(b.arc != NULL);
-		return GetXOfCircle(i, j, b.arc->y) < b.arc->x;
-	}
-
-	bool operator >(const Status& b) const
-	{
-		assert(i != NULL);
-		assert(j != NULL);
-		assert(b.arc != NULL);
-		return GetXOfCircle(i, j, b.arc->y) > b.arc->x;
-	}
-
-	bool operator ==(const Status& b) const
-	{
-		UNUSED(b);
-		return false;
-	}
-
-	std::string str() const
-	{
-		std::stringstream ss;
-
-		if (arc == NULL) {
-			ss << "<" << i->str() << " " << j->str() << ">";
-			return ss.str();
-		}
-		return arc->str();
-	}
-
-	Point* circle_event() const
-	{
-		return _circle_event;
-	}
-
-	void set_circle_event(Point* event)
-	{
-		_circle_event = event;
-	}
-
-	bool hasCircleEvent() const
-	{
-		return circle_event() != NULL;
-	}
-
-	void RemoveCircleEvent()
-	{
-		if (hasCircleEvent()) {
-			circle_event()->MarkAsFalseAlarm();
-			set_circle_event(NULL);
-		}
-	}
-
-private:
-	// TODO: Move method to Point class.
-	/* http://blog.ivank.net/fortunes-algorithm-and-implementation.html */
-	/* Left point |a| and left point |b|. */
-	static double GetXOfCircle(Point* p, Point* q, double y)
-	{
-		/* Centro do círculo de p */
-		double dp = 2.0 * (p->y - y);
-		double a1 = 1.0 / dp;
-		double b1 = -2.0 * p->x / dp;
-		double c1 = y + dp / 4 + p->x * p->x / dp;
-
-		/* Centro do círculo de q */
-		dp = 2.0 * (q->y - y);
-		double a2 = 1.0 / dp;
-		double b2 = -2.0 * q->x / dp;
-		double c2 = y + dp / 4 + q->x * q->x / dp;
-
-		double a = a1 - a2;
-		double b = b1 - b2;
-		double c = c1 - c2;
-
-		double disc = b * b - 4 * a * c;
-		double x1 = (-b + std::sqrt(disc)) / (2 * a);
-		double x2 = (-b - std::sqrt(disc)) / (2 * a);
-
-		double ry;
-		if (p->y > q->y)
-			ry = std::min(x1, x2);
-		else
-			ry = std::max(x1, x2);
-		return ry;
-	}
-
-	Point* _circle_event;
-};
-
-class VoronoiTree: public RBTree<Status> {
-public:
-	VoronoiQueue& queue;
-	VoronoiDCEL& dcel;
-
-	VoronoiTree(VoronoiQueue& queue, VoronoiDCEL& dcel) :
-			queue(queue), dcel(dcel)
-	{
-
-	}
-
-	/**
-	 * Find the nearest parabola in the tree and then replace it by a
-	 * new subtree with two internal nodes and three leaves.  The nearest
-	 * parabola will be splitted into |leaf1| and |leaf3| nodes.  The new
-	 * |parabola| will be |leaf3|.  The internal nodes |internal1| and
-	 * |internal2| are breakpoints (tuples) for the leaves.
-	 */
-	void InsertParabola(Point* parabola)
-	{
-		Status s(parabola);
-
-		std::cerr << "\033[1m==> InsertParabola(" << s.str() << ")\033[0m\n";
-		if (isEmpty()) {
-			Node* new_root = new Node(s, this);
-			set_root(new_root);
-			new_root->set_color(Node::kBlack);
-			return;
-		}
-		Node* nearest = FindParabola(s);
-
-		if (nearest->data()->hasCircleEvent()) {
-			const Status* data = nearest->data();
-			Point* circle_event = data->circle_event();
-			circle_event->MarkAsFalseAlarm();
-			nearest->set_data(data);
-			std::cerr << "\033[31;1mEvento de círculo em "
-					<< circle_event->str() << " marcado como falso alarme\n";
-		}
-
-		Node* internal_root = CreateBreakpointNode(nearest->data()->arc, s.arc);
-		Node* internal2 = CreateBreakpointNode(s.arc, nearest->data()->arc);
-		Node* leaf_left = CreateParabolaNode(nearest->data()->arc);
-		Node* leaf_middle = CreateParabolaNode(parabola);
-		Node* leaf_right = CreateParabolaNode(nearest->data()->arc);
-		internal_root->set_color(nearest->color());
-
-		assert(nearest->isLeaf());
-		assert(internal_root->isLeaf());
-
-		if (nearest->isRoot()) {
-			set_root(internal_root);
-			assert(internal_root->isLeaf());
-		} else {
-			assert(nearest->data()->arc != NULL);
-			assert(nearest->data()->i == NULL);
-			assert(nearest->data()->j == NULL);
-			Node* parent = nearest->parent();
-			assert(internal_root->isLeaf());
-			if (nearest->isLeftChild()) {
-				parent->DetachLeftChild();
-				parent->AttachLeftChild(internal_root);
-				assert(internal_root->isLeaf());
-			} else {
-				assert(nearest->isRightChild());
-				parent->DetachRightChild();
-				assert(parent->right_child() == NULL);
-				parent->AttachRightChild(internal_root);
-				assert(internal_root->isLeaf());
-			}
-			assert(internal_root->isLeaf());
-		}
-		assert(internal_root->isLeaf());
-		assert(internal_root->right_child() == NULL);
-		internal_root->InsertRightChild(internal2);
-		internal_root->InsertLeftChild(leaf_left);
-
-		assert(internal2->isLeaf());
-		internal2->InsertLeftChild(leaf_middle);
-		assert(internal2->right_child() == NULL);
-		internal2->InsertRightChild(leaf_right);
-
-		// Update start edges
-		parabola->start = new Point(parabola->x, nearest->data()->arc->GetParabolaY(parabola));
-
-		std::cerr << "\033[36;1mAresta começando em " << parabola->start->str() << "\033[0m\n";
-
-		delete nearest;
-
-		CheckCircle(leaf_left, parabola->y);
-		CheckCircle(leaf_right, parabola->y);
-	}
-
-	/**
-	 * This method should be called only on leaves (parabolas).
-	 */
-	void CheckCircle(Node* leaf, double sweepline_y)
-	{
-		assert(leaf->isLeaf());
-		Node* left_parent = leaf->GetFirstLeftParent();
-		Node* right_parent = leaf->GetFirstRightParent();
-
-		if (left_parent == NULL || right_parent == NULL)
-			return;
-
-		Node* left_neighbor = left_parent->GetLeftmostChild();
-		Node* right_neighbor = right_parent->GetRightmostChild();
-
-		if (left_neighbor == NULL || right_neighbor == NULL)
-			return;
-		if (left_neighbor == right_neighbor)
-			return;
-
-		Point* a = left_neighbor->data()->arc;
-		Point* b = leaf->data()->arc;
-		Point* c = right_neighbor->data()->arc;
-
-		Point* circle_bottom = new Point();
-		circle_bottom->SetCoordinatesToTheCircleBottom(a, b, c);
-
-		if (circle_bottom->y >= sweepline_y || circle_bottom->y != circle_bottom->y) {
-			delete circle_bottom;
-			return;
-		}
-
-		Status* data = const_cast<Status*>(leaf->data());
-		data->set_circle_event(circle_bottom);
-
-		assert(leaf->data()->circle_event() == circle_bottom);
-
-		circle_bottom->set_circle_lowest_circle_parabola(leaf);
-
-		queue.push(circle_bottom);
-
-		std::cerr << "\033[1;34mEvento de círculo em " << circle_bottom->str()
-				<< "\033[0m\n";
-
-	}
-
-	void RemoveParabola(Point* circle_event)
-	{
-		std::cerr << "\033[32;1m==> RemoveParabola(" << circle_event->str() << ")\033[0m"
-				<< std::endl;
-
-
-		Node* leaf = circle_event->lowest_circle_parabola();
-		std::cerr << "Evento de círculo aponta para " << leaf->data()->str() << " (" <<leaf<< ")\n";
-
-		Node* left_parent = leaf->GetFirstLeftParent();
-		Node* right_parent = leaf->GetFirstRightParent();
-		Node* left_neighbor = left_parent->GetLeftmostChild();
-		Node* right_neighbor = right_parent->GetRightmostChild();
-
-		if (left_neighbor == right_neighbor)
-			std::cerr << "Erro? Parábolas esquerda e direitas são iguais.\n";
-
-		Status* lc = const_cast<Status*>(left_neighbor->data());
-		lc->RemoveCircleEvent();
-
-		Status* rc = const_cast<Status*>(right_neighbor->data());
-		rc->RemoveCircleEvent();
-
-		Node* p = leaf->parent();
-		Status* data = const_cast<Status*>(p->parent()->data());
-		//std::cerr << "Breakpoint atualizado de " << p->parent()->data()->str();
-		if (p->isLeftChild()) {
-			if (leaf->isLeftChild())
-				data->i = p->data()->j;
-			else
-				data->i = p->data()->i;
-		} else {
-			if (leaf->isLeftChild())
-				data->j = p->data()->j;
-			else
-				data->j = p->data()->i;
-		}
-		//std::cerr << " para " << data->str() << "\n";
-		p->parent()->set_data(data);
-
-
-//		Point center = Point::GetCircleCenter(left_neighbor->data()->arc,
-//				leaf->data()->arc,
-//				right_neighbor->data()->arc);
-
-	//	assert( leaf->data()->arc->start != NULL );
-	//	std::cerr << "\033[35;1mNova aresta: " << leaf->data()->arc->start->str();
-	//	std::cerr << " ---> " << center.str() << "\033[0m\n";
-
-		std::cerr << "\033[33;1mVértice de voronoi no centro do ";
-		std::cerr << "círculo " << left_neighbor->data()->arc->str()
-				<< ", " << leaf->data()->arc->str() << ", "
-				<< right_neighbor->data()->arc->str() << " = "
-				<< Point::GetCircleCenter(left_neighbor->data()->arc,
-						leaf->data()->arc,
-						right_neighbor->data()->arc).str()
-				<< ", removendo ";
-		std::cerr << leaf->data()->str() << " e "
-				<< leaf->parent()->data()->str() << "\033[0m\n";
-
-		std::cerr << "\033[35;1mNova aresta deveria começar aqui.\033[0m\n";
-
-		leaf->SelfDelete();
-		leaf->parent()->SelfDelete();
-		delete leaf->parent();
-		delete leaf;
-
-		CheckCircle(left_neighbor, circle_event->y);
-		CheckCircle(right_neighbor, circle_event->y);
-	}
-
-private:
-	Node* CreateBreakpointNode(Point* i, Point* j)
-	{
-		Status status(i, j);
-		return new Node(status, this);
-	}
-
-	Node* CreateParabolaNode(Point* parabola)
-	{
-		Status status(parabola);
-		return new Node(status, this);
-	}
+	RBTreeNode<T>* _root;
 };
 
 }

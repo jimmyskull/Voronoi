@@ -12,6 +12,7 @@
 namespace voronoi {
 
 struct FaceInfo {
+public:
 	FaceInfo() :
 			id(-1)
 	{

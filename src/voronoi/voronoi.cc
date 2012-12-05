@@ -1,5 +1,4 @@
 #include <list>
-#include <macros.hh>
 #include <voronoi/voronoi.hh>
 
 namespace voronoi {
@@ -38,10 +37,9 @@ void Voronoi::HandleCircleEvent(Point* p)
 }
 
 
-Voronoi::Voronoi(const Voronoi& orig) :
-		dcel(orig.dcel), tree(queue, dcel)
+Voronoi::Voronoi(const Voronoi& /*orig*/) :
+		tree(queue, dcel)
 {
-	UNUSED(orig);
 	throw;
 }
 

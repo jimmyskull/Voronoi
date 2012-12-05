@@ -3,12 +3,12 @@
 
 #include <algorithm>
 #include <list>
-#include <queue>
-#include <dcel/dcel.hh>
+#include "diagram.hh"
 #include "face.hh"
 #include "point.hh"
-#include "rbtree.hh"
+#include "queue.hh"
 #include "status.hh"
+#include "tree.hh"
 
 namespace voronoi {
 
@@ -28,8 +28,6 @@ public:
 private:
 	void HandleSiteEvent(Point* p);
 	void HandleCircleEvent(Point* p);
-
-
 };
 
 }

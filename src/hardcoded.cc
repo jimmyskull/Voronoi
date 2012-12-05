@@ -9,25 +9,6 @@
 #include <list>
 #include <voronoi/voronoi.hh>
 
-void print_node(const voronoi::VoronoiTree::Node* v)
-{
-	if (v->isRoot())
-		std::cerr << "root  ";
-	else if (v->isLeftChild())
-		std::cerr << "left  ";
-	else
-		std::cerr << "right ";
-	std::cerr << v->id() << " " << v->data()->str();
-	std::cout << v->id();
-	if (v->isBlack()) {
-		std::cout << " BLACK\n";
-		std::cerr << " \033[1mBLACK\033[0m " << " (" << v << ")\n";
-	} else {
-		std::cout << " RED\n";
-		std::cerr << " \033[31;1mRED\033[0m " << " (" << v << ")\n";
-	}
-}
-
 int main(void)
 {
 	using namespace voronoi;
@@ -46,6 +27,6 @@ int main(void)
 
 	Voronoi voronoi(sites);
 
-	voronoi.tree.PrintTree(print_node);
+	voronoi.tree.PrintTree();
 	return 0;
 }

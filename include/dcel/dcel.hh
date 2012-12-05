@@ -16,6 +16,8 @@
 
 #include <cstddef>
 
+#include <boost/noncopyable.hpp>
+
 #include "EdgeIterator.hh"
 #include "Exception.hh"
 #include "Face.hh"
@@ -29,7 +31,7 @@ namespace dcel {
  Also, it has some methods for simplify the mesh manipulation.
  */
 template<class VertexDataT, class HalfEdgeDataT, class FaceDataT>
-class DCEL {
+class DCEL : boost::noncopyable {
 	typedef DCEL<VertexDataT, HalfEdgeDataT, FaceDataT> MeshT;
 public:
 
