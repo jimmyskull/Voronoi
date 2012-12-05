@@ -106,4 +106,20 @@ void Status::RemoveCircleEvent()
 	}
 }
 
+unsigned int Status::face() const
+{
+	return _face;
+}
+
+
+void Status::set_face(unsigned int face)
+{
+	_face = face;
+}
+
+bool Status::hasFace() const
+{
+	return face() != -1U;
+}
+
 }

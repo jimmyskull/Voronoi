@@ -6,8 +6,7 @@ namespace voronoi {
 Voronoi::Voronoi(std::vector<Point*>& points) :
 		sites(points.begin(), points.end()),
 		queue(sites),
-		dcel(points.size() * 2, points.size() * 2, points.size()),
-		tree(queue, dcel)
+		tree(&queue, &dcel)
 {
 	while (!queue.empty()) {
 		Point* p = queue.top();
@@ -18,6 +17,7 @@ Voronoi::Voronoi(std::vector<Point*>& points) :
 		else
 			HandleSiteEvent(p);
 	}
+	tree.FinishEdges();
 }
 
 void Voronoi::HandleSiteEvent(Point* p)
@@ -34,7 +34,7 @@ void Voronoi::HandleCircleEvent(Point* p)
 
 
 Voronoi::Voronoi(const Voronoi& /*orig*/) :
-		tree(queue, dcel)
+		tree(&queue, &dcel)
 {
 	throw;
 }

@@ -55,8 +55,8 @@ const int DiagramViewer::kWindowPosY = 100;
 const int DiagramViewer::kWindowPosX = 100;
 const int DiagramViewer::kWindowWidth = 1200;
 const int DiagramViewer::kWindowHeight = 800;
-const int DiagramViewer::kTimerMilliseconds = 33;
-const float DiagramViewer::kCameraDistance = 15.0f;
+const int DiagramViewer::kTimerMilliseconds = 30;
+const float DiagramViewer::kCameraDistance = 30.0f;
 const float DiagramViewer::kCameraAngleY = 0.0f;
 const float DiagramViewer::kCameraAngleX = 0.0f;
 const void* DiagramViewer::kFont = GLUT_BITMAP_8_BY_13;
@@ -68,8 +68,8 @@ DiagramViewer& DiagramViewer::getInstance()
 }
 
 DiagramViewer::DiagramViewer() :
-		_mouse_x(false), _mouse_y(false), _mouse_left_button(false),
-				_mouse_right_button(false), _diagram(NULL)
+		_mouse_x(0), _mouse_y(0), _mouse_left_button(false),
+				_mouse_right_button(false), _diagram(NULL), _sites(NULL)
 {
 	Init();
 }
@@ -159,17 +159,14 @@ void DiagramViewer::DisplayCallback()
 	if (diagram() == NULL)
 		return;
 
-	//glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClearColor(.5f, .5f, .5f, 0.f);
+	glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	glLineWidth(100);
-
 	glPushMatrix();
-	glTranslatef(-3, -3, -camera_distance());
+	glTranslated(camera_angle_x(), camera_angle_y(), -camera_distance());
 
-	glRotatef(camera_angle_x(), 1, 0, 0); // pitch
-	glRotatef(camera_angle_y(), 0, 1, 0); // heading
+	//glRotatef(camera_angle_x(), 1, 0, 0); // pitch
+//	glRotatef(camera_angle_y(), 0, 1, 0); // heading
 
 	using voronoi::VoronoiDCEL;
 	const VoronoiDCEL* d = diagram();
@@ -180,71 +177,132 @@ void DiagramViewer::DisplayCallback()
 	pos[1] = -0.42f;
 	int i = 1;
 
+	if (sites() != NULL) {
+		glColor3f(0.0f, 1.0f, 1.0f);
+		std::vector<Point*>* vs = sites();
+		std::vector<Point*>::iterator s;
+		for (s = vs->begin(); s != vs->end(); s++) {
+			double x = (*s)->x() * 2, y = (*s)->y() * 2;
+			glTranslated(x, y, 0);
+
+			GLUquadricObj* cyl = gluNewQuadric();
+			gluQuadricDrawStyle(cyl, GLU_FILL);
+			gluSphere(cyl, 0.1, 50, 100);
+
+			Draw3DString((*s)->str(), pos, color, kFont);
+			glTranslated(-x, -y, 0);
+		}
+	}
+
 	// Draw all vertices as spheres
 	glColor3f(0.5f, 0.0f, 0.1f);
-	const std::vector<VoronoiDCEL::Vertex>& vertices = d->getVertices();
-	for (std::vector<VoronoiDCEL::Vertex>::const_iterator it = vertices.begin();
+	const std::list<const Point*>& vertices = d->vertices();
+	for (std::list<const Point*>::const_iterator it = vertices.begin();
 			it != vertices.end(); it++) {
-		double x = it->getData().x(), y = it->getData().y();
+		double x = (*it)->x() * 2, y = (*it)->y() * 2;
 
-		glTranslatef(x, y, 0);
+		glTranslated(x, y, 0);
 		GLUquadricObj* cyl = gluNewQuadric();
 		gluQuadricDrawStyle(cyl, GLU_FILL);
-		gluSphere(cyl, 0.2, 50, 100);
+		gluSphere(cyl, 0.1, 50, 100);
 
 		std::stringstream name("v");
 		name << i++;
 		Draw3DString(name.str(), pos, color, kFont);
-		glTranslatef(-x, -y, 0);
+		glTranslated(-x, -y, 0);
 	}
 
 	// Draw edges and write vertices index
-	glColor3f(.3f, .3f, .7f);
-	const std::vector<VoronoiDCEL::HalfEdge>& edges = d->getHalfEdges();
-	for (std::vector<VoronoiDCEL::HalfEdge>::const_iterator it = edges.begin();
-			it != edges.end(); it++, it++) {
-		double x = it->getOrigin()->getData().x();
-		double y = it->getOrigin()->getData().y();
-		double dstx = it->getTwin()->getOrigin()->getData().x();
-		double dsty = it->getTwin()->getOrigin()->getData().y();
+	glLineWidth(2);
+	glColor3f(1.3f, 1.3f, 1.7f);
+	//std::cerr << std::endl;
+	const std::list<const DiagramEdge*>& edges = d->edges();
+	for (std::list<const DiagramEdge*>::const_iterator it = edges.begin();
+			it != edges.end(); it++) {
+		const DiagramEdge* p = *it;
+		double x = p->origin->x() * 2;
+		double y = p->origin->y() * 2;
+		double dstx = p->destination->x() * 2;
+		double dsty = p->destination->y() * 2;
 
-		glTranslatef(x, y, 0);
+		//std::cerr << x << ", " << y << " ---> " << dstx << ", " << dsty << "\n";
+
+		glTranslated(x, y, 0);
 		glBegin(GL_LINES);
-		glVertex3f(0.0f, 0.0f, 0.0f);
-		glVertex3f(dstx - x, dsty - y, 0.0f);
+		glVertex3d(0.0f, 0.0f, 0.0f);
+		glVertex3d(dstx - x, dsty - y, 0.0f);
 		glEnd();
-		glTranslatef(-x, -y, 0);
+		glTranslated(-x, -y, 0);
 	}
 
-	// Draw faces indexes
-	glColor3f(.3f, .3f, .7f);
-	const std::vector<VoronoiDCEL::Face>& faces = d->getFaces();
-	for (std::vector<VoronoiDCEL::Face>::const_iterator it = faces.begin();
-			it != faces.end(); it++) {
-		float xsum = 0.0f;
-		float ysum = 0.0f;
-		VoronoiDCEL::HalfEdge* start = it->getBoundary();
-		VoronoiDCEL::HalfEdge* current = start->getNext();
-		xsum += start->getOrigin()->getData().x();
-		ysum += start->getOrigin()->getData().y();
+	/*
+	 // Draw all vertices as spheres
+	 glColor3f(0.5f, 0.0f, 0.1f);
+	 const std::vector<VoronoiDCEL::Vertex>& vertices = d->getVertices();
+	 for (std::vector<VoronoiDCEL::Vertex>::const_iterator it = vertices.begin();
+	 it != vertices.end(); it++) {
+	 double x = it->getData().x(), y = it->getData().y();
 
-		int count = 1;
-		while (current != start) {
-			xsum += current->getOrigin()->getData().x();
-			ysum += current->getOrigin()->getData().y();
-			current = current->getNext();
-			count++;
-		}
-		float x = xsum / count;
-		float y = ysum / count;
+	 glTranslated(x, y, 0);
+	 GLUquadricObj* cyl = gluNewQuadric();
+	 gluQuadricDrawStyle(cyl, GLU_FILL);
+	 gluSphere(cyl, 0.1, 50, 100);
 
-		glTranslatef(x, y, 0);
-		pos[0] = pos[1] = 0.0f;
-		std::stringstream name;
-		name << "f" << it->getData().id;
-		Draw3DString(name.str(), pos, color, kFont);
-		glTranslatef(-x, -y, 0);
-	}
+	 std::stringstream name("v");
+	 name << i++;
+	 Draw3DString(name.str(), pos, color, kFont);
+	 glTranslated(-x, -y, 0);
+	 }
+
+	 // Draw edges and write vertices index
+	 glLineWidth(2);
+	 glColor3f(1.3f, 1.3f, 1.7f);
+	 const std::vector<VoronoiDCEL::HalfEdge>& edges = d->getHalfEdges();
+	 for (std::vector<VoronoiDCEL::HalfEdge>::const_iterator it = edges.begin();
+	 it != edges.end(); it++, it++) {
+	 double x = it->getOrigin()->getData().x();
+	 double y = it->getOrigin()->getData().y();
+	 double dstx = it->getTwin()->getOrigin()->getData().x();
+	 double dsty = it->getTwin()->getOrigin()->getData().y();
+
+	 std::cerr << x << ", " << y << "  -- >  " << dstx << ", " << dsty << "\n";
+	 glTranslated(x, y, 0);
+	 glBegin(GL_LINES);
+	 glVertex3d(0.0f, 0.0f, 0.0f);
+	 glVertex3d(dstx - x, dsty - y, 0.0f);
+	 glEnd();
+	 glTranslated(-x, -y, 0);
+	 }
+
+	 // Draw faces indexes
+	 glColor3f(.3f, .3f, .7f);
+	 const std::vector<VoronoiDCEL::Face>& faces = d->getFaces();
+	 for (std::vector<VoronoiDCEL::Face>::const_iterator it = faces.begin();
+	 it != faces.end(); it++) {
+	 float xsum = 0.0f;
+	 float ysum = 0.0f;
+	 VoronoiDCEL::HalfEdge* start = it->getBoundary();
+	 VoronoiDCEL::HalfEdge* current = start->getNext();
+	 xsum += start->getOrigin()->getData().x();
+	 ysum += start->getOrigin()->getData().y();
+
+	 int count = 1;
+	 while (current != start) {
+	 xsum += current->getOrigin()->getData().x();
+	 ysum += current->getOrigin()->getData().y();
+	 current = current->getNext();
+	 count++;
+	 }
+	 double x = xsum / count;
+	 double y = ysum / count;
+
+	 glTranslated(x, y, 0);
+	 pos[0] = pos[1] = 0.0f;
+	 std::stringstream name;
+	 name << "f" << it->getData().id;
+	 Draw3DString(name.str(), pos, color, kFont);
+	 glTranslated(-x, -y, 0);
+	 }*/
 
 	glPopMatrix();
 	glutSwapBuffers();
@@ -261,7 +319,8 @@ void DiagramViewer::TimerCallback(int milliseconds)
 	glutPostRedisplay();
 }
 
-void DiagramViewer::KeyboardCallback(unsigned char /*key*/, int /*x*/, int /*y*/)
+void DiagramViewer::KeyboardCallback(unsigned char /*key*/, int /*x*/,
+		int /*y*/)
 {
 }
 
@@ -285,13 +344,21 @@ void DiagramViewer::MouseCallback(int button, int state, int x, int y)
 void DiagramViewer::MouseMotionCallback(int x, int y)
 {
 	if (mouse_left_button()) {
-		set_camera_angle_y(camera_angle_y() + (y - mouse_y()) * 0.002f);
-		set_camera_angle_x(camera_angle_x() + (x - mouse_x()) * 0.002f);
+		double deltay = mouse_y() - y, deltax = x - mouse_x();
+		if (deltay < -10)
+			set_camera_angle_y(camera_angle_y() - 1);
+		else if (deltay > 10)
+			set_camera_angle_y(camera_angle_y() + 1);
+		if (deltax < -10)
+			set_camera_angle_x(camera_angle_x() - 1);
+		else if (deltax > 10)
+			set_camera_angle_x(camera_angle_x() + 1);
 		set_mouse_x(x);
 		set_mouse_y(y);
 	}
 	if (mouse_right_button()) {
-		set_camera_distance(camera_distance() - (y - mouse_y()) * 0.0002f);
+		double delta = y - mouse_y();
+		set_camera_distance(camera_distance() + delta);
 		set_mouse_y(y);
 	}
 }
@@ -306,7 +373,7 @@ void DiagramViewer::UpdatePerspective(int width, int height)
 	glViewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0f, static_cast<float>(width) / height, 1.0f, 1000.0f);
+	gluPerspective(10.0f, static_cast<float>(width) / height, 1.0f, 1000.0f);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -321,12 +388,22 @@ const VoronoiDCEL* DiagramViewer::diagram() const
 	return _diagram;
 }
 
-bool DiagramViewer::mouse_x() const
+void DiagramViewer::set_sites(std::vector<Point*>* sites)
+{
+	_sites = sites;
+}
+
+std::vector<Point*>* DiagramViewer::sites() const
+{
+	return _sites;
+}
+
+int DiagramViewer::mouse_x() const
 {
 	return _mouse_x;
 }
 
-bool DiagramViewer::mouse_y() const
+int DiagramViewer::mouse_y() const
 {
 	return _mouse_y;
 }
@@ -341,12 +418,12 @@ bool DiagramViewer::mouse_right_button() const
 	return _mouse_right_button;
 }
 
-void DiagramViewer::set_mouse_x(bool value)
+void DiagramViewer::set_mouse_x(int value)
 {
 	_mouse_x = value;
 }
 
-void DiagramViewer::set_mouse_y(bool value)
+void DiagramViewer::set_mouse_y(int value)
 {
 	_mouse_y = value;
 }

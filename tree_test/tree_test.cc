@@ -20,8 +20,8 @@ static double frand(double fmin, double fmax)
 int main(void)
 {
 	VoronoiQueue queue;
-	VoronoiDCEL dcel(6, 12, 6);
-	VoronoiTree tree(queue, dcel);
+	VoronoiDCEL dcel;
+	VoronoiTree tree(&queue, &dcel);
 
 /*	Point* a = new Point(2, 5);
 	Point* b = new Point(5, 4);
@@ -54,7 +54,7 @@ int main(void)
 
 	tree.PrintTree();
 
-	dcel.clear();
+//	dcel.clear();
 
 //	delete a;
 //	delete b;

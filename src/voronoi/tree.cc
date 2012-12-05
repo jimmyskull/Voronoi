@@ -7,6 +7,8 @@
  */
 
 #include <iostream>
+#include <voronoi/diagram.hh>
+#include <voronoi/face.hh>
 #include <voronoi/point.hh>
 #include <voronoi/queue.hh>
 #include <voronoi/status.hh>
@@ -147,11 +149,27 @@ void VoronoiTree::CheckCircle(Node* leaf, double sweepline_y)
 
 	circle_bottom->set_circle_lowest_circle_parabola_node(leaf);
 
-	queue.push(circle_bottom);
+	queue->push(circle_bottom);
 
 	std::cerr << "\033[1;34mEvento de círculo em " << circle_bottom->str()
 			<< "\033[0m\n";
 }
+
+//static unsigned int getDCELFace(VoronoiDCEL* dcel, const Status* status)
+//{
+//	if (status->hasFace())
+//		return status->face();
+//	if (dcel->getFaces().capacity() == dcel->getFaces().size())
+//		dcel->getFaces().resize(dcel->getFaces().size() + 1);
+//	return dcel->createFace(NULL);
+//}
+//
+//static unsigned int createDCELVertex(VoronoiDCEL* dcel)
+//{
+//	if (dcel->getVertices().capacity() == dcel->getVertices().size())
+//		dcel->getVertices().resize(dcel->getVertices().size() + 1);
+//	return dcel->createVertex();
+//}
 
 void VoronoiTree::RemoveParabola(Point* circle_event)
 {
@@ -233,6 +251,42 @@ void VoronoiTree::RemoveParabola(Point* circle_event)
 
 	std::cerr << "\033[35;1mNova aresta deveria começar aqui.\033[0m\n";
 
+
+	dcel->addVertex(left_parent->data()->start());
+	dcel->addVertex(right_parent->data()->start());
+	dcel->addVertex(center);
+	dcel->addEdge(left_parent->data()->start(), center);
+	dcel->addEdge(right_parent->data()->start(), center);
+
+//	// Adicionar aresta na DCEL
+//	unsigned int face = getDCELFace(dcel, leaf->data());
+//	VoronoiDCEL::Face* fcenter = dcel->getFace(face);
+//
+//	unsigned int left_face = getDCELFace(dcel, left_neighbor->data());
+//	VoronoiDCEL::Face* fleft = dcel->getFace(left_face);
+//
+//	unsigned int right_face = getDCELFace(dcel, right_neighbor->data());
+//	VoronoiDCEL::Face* fright = dcel->getFace(right_face);
+//
+//	unsigned int centervertex = createDCELVertex(dcel);
+//	VoronoiDCEL::Vertex* circlevertex = dcel->getVertex(centervertex);
+//	circlevertex->getData().set_coordinates(center->x(), center->y());
+//
+//	unsigned int v1 = createDCELVertex(dcel), v2 = createDCELVertex(dcel);
+//	VoronoiDCEL::Vertex* leftv = dcel->getVertex(v1);
+//	leftv->getData().set_coordinates(left_parent->data()->start()->x(), left_parent->data()->start()->y());
+//	VoronoiDCEL::Vertex* rightv = dcel->getVertex(v2);
+//	rightv->getData().set_coordinates(right_parent->data()->start()->x(), right_parent->data()->start()->y());
+//
+//	std::cerr << leftv->getData().str() << " -- > " << circlevertex->getData().str() << "\n";
+//	std::cerr << circlevertex->getData().str() << " -- > " << rightv->getData().str() << "\n";
+//
+//	dcel->getHalfEdges().resize(dcel->getHalfEdges().size() + 4);
+//	dcel->createEdge(leftv, fleft, circlevertex, fcenter);
+//	dcel->createEdge(circlevertex, fcenter, rightv, fright);
+//	std::cerr << face << left_face <<  right_face << centervertex << v1 << v2 << std::endl;
+//	std::cerr << dcel->getVertices().size() << std::endl;
+
 	Node* par = leaf;
 	Node* higher = NULL;
 	while (!par->isRoot()) {
@@ -257,6 +311,18 @@ void VoronoiTree::RemoveParabola(Point* circle_event)
 	CheckCircle(right_neighbor, circle_event->y());
 }
 
+void VoronoiTree::FinishEdges()
+{
+	Node* n = root();
+
+	Point* end = new Point(n->data()->start()->x(),
+			n->data()->i->GetYOfParabolaInsersection(n->data()->j));
+
+	dcel->addVertex(n->data()->start());
+	dcel->addVertex(end);
+	dcel->addEdge(n->data()->start(), end);
+}
+
 void VoronoiTree::PrintTree()
 {
 	RBTree::PrintTree(print_node);
@@ -273,6 +339,22 @@ Node* VoronoiTree::CreateParabolaNode(Point* parabola)
 {
 	Status status(parabola);
 	return new Node(status, this);
+}
+
+void VoronoiTree::InternalFinishEdges(Node* node)
+{
+	if (node == NULL || node->isLeaf())
+		return;
+
+	Point* end = new Point(node->data()->start()->x(),
+			node->data()->i->GetYOfParabolaInsersection(node->data()->j));
+
+	dcel->addVertex(node->data()->start());
+	dcel->addVertex(end);
+	dcel->addEdge(node->data()->start(), end);
+
+	InternalFinishEdges(node->left_child());
+	InternalFinishEdges(node->right_child());
 }
 
 }

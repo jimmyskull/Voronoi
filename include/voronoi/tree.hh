@@ -22,10 +22,10 @@ typedef RBTreeNode<Status> Node;
 
 class VoronoiTree: public RBTree<Status> {
 public:
-	VoronoiQueue& queue;
-	VoronoiDCEL& dcel;
+	VoronoiQueue* queue;
+	VoronoiDCEL* dcel;
 
-	VoronoiTree(VoronoiQueue& queue, VoronoiDCEL& dcel) :
+	VoronoiTree(VoronoiQueue* queue, VoronoiDCEL* dcel) :
 			queue(queue), dcel(dcel)
 	{
 	}
@@ -43,11 +43,15 @@ public:
 
 	void CheckCircle(Node* leaf, double sweepline_y);
 
+	void FinishEdges();
+
 	void PrintTree();
 
 private:
 	Node* CreateBreakpointNode(Point* i, Point* j);
 	Node* CreateParabolaNode(Point* parabola);
+
+	void InternalFinishEdges(Node* node);
 };
 
 }

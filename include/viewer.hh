@@ -31,6 +31,9 @@ public:
 	void set_diagram(VoronoiDCEL* diagram);
 	const VoronoiDCEL* diagram() const;
 
+	void set_sites(std::vector<Point*>* sites);
+	std::vector<Point*>* sites() const;
+
 	void Init();
 	void Show();
 private:
@@ -42,8 +45,8 @@ private:
 
 	void UpdatePerspective(int width, int height);
 
-	bool mouse_x() const;
-	bool mouse_y() const;
+	int mouse_x() const;
+	int mouse_y() const;
 	bool mouse_left_button() const;
 	bool mouse_right_button() const;
 
@@ -51,8 +54,8 @@ private:
 	int camera_angle_x() const;
 	float camera_distance() const;
 
-	void set_mouse_x(bool value);
-	void set_mouse_y(bool value);
+	void set_mouse_x(int value);
+	void set_mouse_y(int value);
 	void set_mouse_left_button(bool value);
 	void set_mouse_right_button(bool value);
 
@@ -63,8 +66,8 @@ private:
 	void Draw3DString(const std::string str, const std::vector<float>& pos,
 			const std::vector<float>& color, const void* font);
 
-	bool _mouse_x;
-	bool _mouse_y;
+	int _mouse_x;
+	int _mouse_y;
 	bool _mouse_left_button;
 	bool _mouse_right_button;
 
@@ -73,6 +76,7 @@ private:
 	float _camera_distance;
 
 	VoronoiDCEL* _diagram;
+	std::vector<Point*>* _sites;
 
 	static const int kWindowPosY;
 	static const int kWindowPosX;

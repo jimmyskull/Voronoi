@@ -25,15 +25,19 @@ public:
 
 	Point* start() const;
 	Point* circle_event() const;
+	unsigned int face() const;
 
 	void set_start(Point* start);
 	void set_circle_event(Point* event);
+	void set_face(unsigned int face);
 	bool hasCircleEvent() const;
+	bool hasFace() const;
 	void RemoveCircleEvent();
 
 private:
 	Point* _circle_event;
 	Point* _start; /**< Edge start point */
+	unsigned int _face;
 };
 
 }

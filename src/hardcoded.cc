@@ -9,13 +9,11 @@
 #include <list>
 #include <voronoi/voronoi.hh>
 
+#include <viewer.hh>
+
 int main(void)
 {
 	using namespace voronoi;
-
-	VoronoiQueue queue;
-	VoronoiDCEL dcel(5, 10, 5);
-	VoronoiTree tree(queue, dcel);
 
 	std::vector<Point*> sites;
 
@@ -29,5 +27,14 @@ int main(void)
 	Voronoi voronoi(sites);
 
 	voronoi.tree.PrintTree();
+
+	//std::cerr <<  "A merda do caralho do filho da puta do vagabundo da buceta desse lixo de travesti viado filho de uma puta do caralho tem a porra do tamanho igual a porra da mae na zona, "
+	//		<< voronoi.tree.dcel->getVertices().size() << std::endl;
+
+	DiagramViewer& dv = DiagramViewer::getInstance();
+	dv.set_diagram(&voronoi.dcel);
+	dv.set_sites(&voronoi.sites);
+	dv.Show();
+
 	return 0;
 }

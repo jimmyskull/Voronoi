@@ -9,19 +9,39 @@
 #ifndef _DIAGRAM_HH_
 #define _DIAGRAM_HH_
 
+#include <list>
 #include <cstddef>
-#include <dcel/dcel.hh>
 
 namespace voronoi {
 
 struct FaceInfo;
 struct Point;
 
-class VoronoiDCEL: public dcel::DCEL<Point, Point, FaceInfo> {
+struct DiagramEdge {
+	const Point* origin;
+	const Point* destination;
+
+	DiagramEdge(const Point* origin, const Point* destination) :
+		origin(origin), destination(destination)
+	{
+
+	}
+};
+
+class VoronoiDCEL {
 public:
 	VoronoiDCEL();
 
-	VoronoiDCEL(size_t vertices, size_t edges, size_t faces);
+	~VoronoiDCEL();
+
+	void addEdge(const Point* origin, const Point* destination);
+	void addVertex(const Point* point);
+
+	const std::list<const DiagramEdge*>& edges() const;
+	const std::list<const Point*>& vertices() const;
+private:
+	std::list<const DiagramEdge*> _edges;
+	std::list<const Point*> _vertices;
 };
 
 }
