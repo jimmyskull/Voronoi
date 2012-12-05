@@ -1,5 +1,5 @@
 file (GLOB_RECURSE project_SRCS tree.cc voronoi.cc point.cc status.cc
-								diagram.cc)
+								diagram.cc queue.cc)
 
 set (project_LIBS ${Boost_LIBRARIES} ${GLog_LIBRARIES} ${Gmock_LIBRARIES})
 

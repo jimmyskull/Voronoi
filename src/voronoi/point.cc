@@ -45,7 +45,7 @@ class RBTreeNode;
 
 Point::Point() :
 		_x(0.0), _y(0.0), _id(0), _false_alarm(false), _face(-1U),
-				_lowest_circle_parabola(NULL)
+				_lowest_circle_parabola_node(NULL)
 {
 }
 
@@ -54,12 +54,12 @@ Point::Point(const Point& p) :
 {
 	set_coordinates(p.x(), p.y());
 	set_id(p.id());
-	set_circle_lowest_circle_parabola(p.lowest_circle_parabola());
+	set_circle_lowest_circle_parabola_node(p.lowest_circle_parabola_node());
 }
 
 Point::Point(double x, double y) :
 		_id(0), _false_alarm(false), _face(-1U),
-				_lowest_circle_parabola(NULL)
+				_lowest_circle_parabola_node(NULL)
 {
 	set_coordinates(x, y);
 }
@@ -150,19 +150,19 @@ void Point::SetCoordinatesToTheCircleBottom(const Point* a, const Point* b,
 	set_coordinates(d.x(), d.y() - radius);
 }
 
-RBTreeNode<Status>* Point::lowest_circle_parabola() const
+RBTreeNode<Status>* Point::lowest_circle_parabola_node() const
 {
-	return _lowest_circle_parabola;
+	return _lowest_circle_parabola_node;
 }
 
-void Point::set_circle_lowest_circle_parabola(RBTreeNode<Status>* node)
+void Point::set_circle_lowest_circle_parabola_node(RBTreeNode<Status>* node)
 {
-	_lowest_circle_parabola = node;
+	_lowest_circle_parabola_node = node;
 }
 
 bool Point::isCircleEvent() const
 {
-	return lowest_circle_parabola() != NULL;
+	return lowest_circle_parabola_node() != NULL;
 }
 
 bool Point::isFalseAlarm() const
@@ -175,7 +175,7 @@ void Point::MarkAsFalseAlarm()
 	_false_alarm = true;
 }
 
-double Point::GetParabolaY(Point* other) const
+double Point::GetYOfParabolaInsersection(Point* other) const
 {
 	double dp = 2. * (y() - other->y());
 	double a1 = 1. / dp;
@@ -186,8 +186,7 @@ double Point::GetParabolaY(Point* other) const
 }
 
 /* http://blog.ivank.net/fortunes-algorithm-and-implementation.html */
-/* Left point |a| and left point |b|. */
-double Point::GetXOfCircle(const Point* q, double sweep_y) const
+double Point::GetXOfParabolaIntersection(const Point* q, double sweep_y) const
 {
 	/* p's (current) parabola */
 	double dp = 2.0 * (y() - sweep_y);

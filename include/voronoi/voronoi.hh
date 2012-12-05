@@ -2,7 +2,7 @@
 #define	__VORONOI_H__
 
 #include <algorithm>
-#include <list>
+#include <vector>
 #include "diagram.hh"
 #include "face.hh"
 #include "point.hh"
@@ -17,11 +17,11 @@ class VoronoiDCEL;
 
 class Voronoi {
 public:
-	Voronoi(std::list<Point*>&);
+	Voronoi(std::vector<Point*>&);
 	Voronoi(const Voronoi&);
 	virtual ~Voronoi();
 
-	std::list<Point*> sites;
+	std::vector<Point*> sites;
 	VoronoiQueue queue;
 	VoronoiDCEL dcel;
 	VoronoiTree tree;

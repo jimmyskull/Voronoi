@@ -14,6 +14,11 @@
 
 namespace voronoi {
 
+template <class T>
+class RBTreeNode;
+
+typedef RBTreeNode<Status> Node;
+
 static void print_node(const RBTreeNode<Status>* v)
 {
 	if (v->isRoot())
@@ -46,15 +51,16 @@ void VoronoiTree::InsertParabola(Point* parabola)
 	}
 	Node* nearest = FindParabola(s);
 
-	std::cerr << "Mais próximo: " << nearest->data()->str() << " (" << nearest << ")\n";
+	std::cerr << "Mais próximo: " << nearest->data()->str() << " (" << nearest
+			<< ")\n";
 
 	if (nearest->data()->hasCircleEvent()) {
 		const Status* data = nearest->data();
 		Point* circle_event = data->circle_event();
 		circle_event->MarkAsFalseAlarm();
-		nearest->set_data(data);
-		std::cerr << "\033[31;1mEvento de círculo em "
-				<< circle_event->str() << " marcado como falso alarme\n";
+		//nearest->set_data(data);
+		std::cerr << "\033[31;1mEvento de círculo em " << circle_event->str()
+				<< " marcado como falso alarme\n";
 	}
 
 	Node* internal_root = CreateBreakpointNode(nearest->data()->arc, s.arc);
@@ -64,62 +70,44 @@ void VoronoiTree::InsertParabola(Point* parabola)
 	Node* leaf_right = CreateParabolaNode(nearest->data()->arc);
 	internal_root->set_color(nearest->color());
 
-	assert(nearest->isLeaf());
-	assert(internal_root->isLeaf());
-
 	if (nearest->isRoot()) {
 		set_root(internal_root);
-		assert(internal_root->isLeaf());
 	} else {
-		assert(nearest->data()->arc != NULL);
-		assert(nearest->data()->i == NULL);
-		assert(nearest->data()->j == NULL);
 		Node* parent = nearest->parent();
-		assert(internal_root->isLeaf());
 		if (nearest->isLeftChild()) {
 			parent->DetachLeftChild();
 			parent->AttachLeftChild(internal_root);
-			assert(internal_root->isLeaf());
 		} else {
-			assert(nearest->isRightChild());
 			parent->DetachRightChild();
-			assert(parent->right_child() == NULL);
 			parent->AttachRightChild(internal_root);
-			assert(internal_root->isLeaf());
 		}
-		assert(internal_root->isLeaf());
 	}
-	assert(internal_root->isLeaf());
-	assert(internal_root->right_child() == NULL);
 	internal_root->InsertRightChild(internal2);
 	internal_root->InsertLeftChild(leaf_left);
 
-	assert(internal2->isLeaf());
 	internal2->InsertLeftChild(leaf_middle);
-	assert(internal2->right_child() == NULL);
 	internal2->InsertRightChild(leaf_right);
 
 	// Update start edges
-	Point* start = new Point(parabola->x(), nearest->data()->arc->GetParabolaY(parabola));
+	Point* start = new Point(parabola->x(),
+			nearest->data()->arc->GetYOfParabolaInsersection(parabola));
 
 	Status* ll = const_cast<Status*>(internal2->data());
 	ll->set_start(start);
-	//leaf_left->set_data(ll);
-
 
 	Status* lr = const_cast<Status*>(internal_root->data());
 	lr->set_start(start);
-	//leaf_right->set_data(lr);
 
 	std::cerr << "\033[36;1mAresta começando em " << start->str();
-	std::cerr << " (armazenado em " << ll->str() << " e " << lr->str() << ")\033[0m\n";
+	std::cerr << " (armazenado em " << ll->str() << " e " << lr->str()
+			<< ")\033[0m\n";
 
 	delete nearest;
 
 	CheckCircle(leaf_left, parabola->y());
 	CheckCircle(leaf_right, parabola->y());
 
-	PrintTree();
+	//PrintTree();
 }
 
 /**
@@ -127,7 +115,6 @@ void VoronoiTree::InsertParabola(Point* parabola)
  */
 void VoronoiTree::CheckCircle(Node* leaf, double sweepline_y)
 {
-	assert(leaf->isLeaf());
 	Node* left_parent = leaf->GetFirstParentAtLeft();
 	Node* right_parent = leaf->GetFirstParentAtRight();
 
@@ -149,7 +136,8 @@ void VoronoiTree::CheckCircle(Node* leaf, double sweepline_y)
 	Point* circle_bottom = new Point();
 	circle_bottom->SetCoordinatesToTheCircleBottom(a, b, c);
 
-	if (circle_bottom->y() >= sweepline_y || circle_bottom->y() != circle_bottom->y()) {
+	if (circle_bottom->y() >= sweepline_y
+			|| circle_bottom->y() != circle_bottom->y()) {
 		delete circle_bottom;
 		return;
 	}
@@ -157,26 +145,22 @@ void VoronoiTree::CheckCircle(Node* leaf, double sweepline_y)
 	Status* data = const_cast<Status*>(leaf->data());
 	data->set_circle_event(circle_bottom);
 
-	assert(leaf->data()->circle_event() == circle_bottom);
-
-	circle_bottom->set_circle_lowest_circle_parabola(leaf);
+	circle_bottom->set_circle_lowest_circle_parabola_node(leaf);
 
 	queue.push(circle_bottom);
 
 	std::cerr << "\033[1;34mEvento de círculo em " << circle_bottom->str()
 			<< "\033[0m\n";
-
 }
 
 void VoronoiTree::RemoveParabola(Point* circle_event)
 {
-	std::cerr << "\033[32;1m==> RemoveParabola(" << circle_event->str() << ")\033[0m"
-			<< std::endl;
+	std::cerr << "\033[32;1m==> RemoveParabola(" << circle_event->str()
+			<< ")\033[0m" << std::endl;
 
-	PrintTree();
-
-	Node* leaf = circle_event->lowest_circle_parabola();
-	std::cerr << "Evento de círculo aponta para " << leaf->data()->str() << " (" <<leaf<< ")\n";
+	Node* leaf = circle_event->lowest_circle_parabola_node();
+	std::cerr << "Evento de círculo aponta para " << leaf->data()->str() << " ("
+			<< leaf << ")\n";
 
 	Node* left_parent = leaf->GetFirstParentAtLeft();
 	Node* right_parent = leaf->GetFirstParentAtRight();
@@ -207,12 +191,12 @@ void VoronoiTree::RemoveParabola(Point* circle_event)
 			data->j = p->data()->i;
 	}
 	std::cerr << " para " << data->str() << "\n";
-	//p->parent()->set_data(data);
 
 	bool is_left = p->isLeftChild();
 	while ((p = p->parent()) != NULL && !p->isRoot()) {
 		Status* data = const_cast<Status*>(p->parent()->data());
-		std::cerr << "-- Breakpoint atualizado de " << p->parent()->data()->str();
+		std::cerr << "-- Breakpoint atualizado de "
+				<< p->parent()->data()->str();
 		if (p->isLeftChild()) {
 			data->i = p->data()->j;
 		} else {
@@ -229,21 +213,23 @@ void VoronoiTree::RemoveParabola(Point* circle_event)
 			leaf->data()->arc,
 			right_neighbor->data()->arc);
 
+	std::cerr << "\033[35;1mNova aresta: "
+			<< left_parent->data()->start()->str();
+	std::cerr << " ---> " << center->str() << " (" << left_parent
+			<< ")\033[0m\n";
 
-	std::cerr << "\033[35;1mNova aresta: " << left_parent->data()->start()->str();
-	std::cerr << " ---> " << center->str() << " (" << left_parent << ")\033[0m\n";
-
-	std::cerr << "\033[35;1mNova aresta: " << right_parent->data()->start()->str();
-	std::cerr << " ---> " << center->str() << " (" << right_parent << ")\033[0m\n";
+	std::cerr << "\033[35;1mNova aresta: "
+			<< right_parent->data()->start()->str();
+	std::cerr << " ---> " << center->str() << " (" << right_parent
+			<< ")\033[0m\n";
 
 	std::cerr << "\033[33;1mVértice de voronoi no centro do ";
-	std::cerr << "círculo " << left_neighbor->data()->arc->str()
-			<< ", " << leaf->data()->arc->str() << ", "
-			<< right_neighbor->data()->arc->str() << " = "
-			<< center->str()
+	std::cerr << "círculo " << left_neighbor->data()->arc->str() << ", "
+			<< leaf->data()->arc->str() << ", "
+			<< right_neighbor->data()->arc->str() << " = " << center->str()
 			<< ", removendo ";
-	std::cerr << leaf->data()->str() << " e "
-			<< leaf->parent()->data()->str() << " " << leaf->parent() << "\033[0m\n";
+	std::cerr << leaf->data()->str() << " e " << leaf->parent()->data()->str()
+			<< " " << leaf->parent() << "\033[0m\n";
 
 	std::cerr << "\033[35;1mNova aresta deveria começar aqui.\033[0m\n";
 
@@ -251,18 +237,21 @@ void VoronoiTree::RemoveParabola(Point* circle_event)
 	Node* higher = NULL;
 	while (!par->isRoot()) {
 		par = par->parent();
-		if (par == left_parent) higher = left_parent;
-		if (par == right_parent) higher = right_parent;
+		if (par == left_parent)
+			higher = left_parent;
+		if (par == right_parent)
+			higher = right_parent;
 	}
 	Status* gpstat = const_cast<Status*>(higher->data());
 	gpstat->set_start(center);
 
+	//delete leaf->data()->start();
 	leaf->SelfDelete();
 	leaf->parent()->SelfDelete();
 	delete leaf->parent();
 	delete leaf;
 
-	PrintTree();
+	//PrintTree();
 
 	CheckCircle(left_neighbor, circle_event->y());
 	CheckCircle(right_neighbor, circle_event->y());
@@ -271,7 +260,7 @@ void VoronoiTree::RemoveParabola(Point* circle_event)
 void VoronoiTree::PrintTree()
 {
 	RBTree::PrintTree(print_node);
-	std::cout<< " . ";
+	std::cout << " . ";
 }
 
 Node* VoronoiTree::CreateBreakpointNode(Point* i, Point* j)

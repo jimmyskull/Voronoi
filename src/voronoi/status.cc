@@ -44,7 +44,7 @@ bool Status::operator <(const Status& b) const
 	assert(i != NULL);
 	assert(j != NULL);
 	assert(b.arc != NULL);
-	return b.arc->x() < i->GetXOfCircle(j, b.arc->y());
+	return b.arc->x() < i->GetXOfParabolaIntersection(j, b.arc->y());
 }
 
 bool Status::operator >(const Status& b) const
@@ -52,7 +52,7 @@ bool Status::operator >(const Status& b) const
 	assert(i != NULL);
 	assert(j != NULL);
 	assert(b.arc != NULL);
-	return b.arc->x() > i->GetXOfCircle(j, b.arc->y());
+	return b.arc->x() > i->GetXOfParabolaIntersection(j, b.arc->y());
 }
 
 bool Status::operator ==(const Status& b) const

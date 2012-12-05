@@ -11,6 +11,7 @@
 
 #include <queue>
 #include <vector>
+#include "point.hh"
 
 namespace voronoi {
 
@@ -19,7 +20,9 @@ struct ComparePoint;
 
 class VoronoiQueue: public std::priority_queue<Point*, std::vector<Point*>,
 		ComparePoint> {
-
+public:
+	VoronoiQueue();
+	VoronoiQueue(std::vector<Point*>& sites);
 };
 
 }

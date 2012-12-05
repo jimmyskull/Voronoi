@@ -30,20 +30,20 @@ public:
 	void set_x(double x);
 	void set_y(double y);
 	void set_face(unsigned int face);
-	void set_circle_lowest_circle_parabola(RBTreeNode<Status>* node);
+	void set_circle_lowest_circle_parabola_node(RBTreeNode<Status>* node);
 
 	double x() const;
 	double y() const;
 	int id() const;
 	unsigned int face() const;
-	RBTreeNode<Status>* lowest_circle_parabola() const;
+	RBTreeNode<Status>* lowest_circle_parabola_node() const;
 
 	bool operator <(const Point& b) const;
 	bool operator >(const Point& b) const;
 	bool operator ==(const Point& b) const;
 
-	double GetXOfCircle(const Point* q, double sweep_y) const;
-	double GetParabolaY(Point* other) const;
+	double GetXOfParabolaIntersection(const Point* q, double sweep_y) const;
+	double GetYOfParabolaInsersection(Point* other) const;
 
 	void SetCoordinatesToTheCircleCenter(const Point* a, const Point* b,
 			const Point* c);
@@ -62,7 +62,7 @@ private:
 	int _id;
 	bool _false_alarm;
 	unsigned int _face;
-	RBTreeNode<Status>* _lowest_circle_parabola;
+	RBTreeNode<Status>* _lowest_circle_parabola_node;
 };
 
 struct ComparePoint: public std::binary_function<Point*, Point*, bool> {

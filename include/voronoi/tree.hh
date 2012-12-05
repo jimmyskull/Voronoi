@@ -18,7 +18,6 @@ class Status;
 class VoronoiDCEL;
 class VoronoiQueue;
 
-//class Node: public RBTree<Status> {};
 typedef RBTreeNode<Status> Node;
 
 class VoronoiTree: public RBTree<Status> {
@@ -40,12 +39,9 @@ public:
 	 */
 	void InsertParabola(Point* parabola);
 
-	/**
-	 * This method should be called only on leaves (parabolas).
-	 */
-	void CheckCircle(Node* leaf, double sweepline_y);
-
 	void RemoveParabola(Point* circle_event);
+
+	void CheckCircle(Node* leaf, double sweepline_y);
 
 	void PrintTree();
 

@@ -17,8 +17,9 @@ int main(void)
 	VoronoiDCEL dcel(5, 10, 5);
 	VoronoiTree tree(queue, dcel);
 
-	std::list<Point*> sites;
+	std::vector<Point*> sites;
 
+	sites.reserve(5);
 	sites.push_back(new Point(2, 5));
 	sites.push_back(new Point(5, 4));
 	sites.push_back(new Point(3, 3));

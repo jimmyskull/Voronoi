@@ -3,16 +3,12 @@
 
 namespace voronoi {
 
-Voronoi::Voronoi(std::list<Point*>& points) :
+Voronoi::Voronoi(std::vector<Point*>& points) :
 		sites(points.begin(), points.end()),
+		queue(sites),
 		dcel(points.size() * 2, points.size() * 2, points.size()),
 		tree(queue, dcel)
 {
-	// Passo 1
-	std::list<Point*>::const_iterator it;
-	for (it = points.begin(); it != points.end(); it++)
-		queue.push(*it);
-	// Passo 2
 	while (!queue.empty()) {
 		Point* p = queue.top();
 		queue.pop();
@@ -45,9 +41,11 @@ Voronoi::Voronoi(const Voronoi& /*orig*/) :
 
 Voronoi::~Voronoi()
 {
-	while (!sites.empty()) {
-		delete sites.front();
-		sites.pop_front();
+	std::vector<Point*>::iterator i = sites.begin();
+
+	while (i != sites.end()) {
+		delete *i;
+		i++;
 	}
 }
 
